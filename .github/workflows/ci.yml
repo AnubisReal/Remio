@@ -1,0 +1,23 @@
+name: Validate Remio
+on:
+  push:
+    branches: [main]
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v4
+      - name: Core regression tests
+        run: swift test
+      - name: Distribution tests
+        run: python3 -m unittest discover -s tests/distribution -v
+      - name: Build iOS Simulator
+        run: xcodebuild -project ios/Remio.xcodeproj -scheme Remio -configuration Debug -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=YES build
+      - name: Check ignored reference files
+        run: |
+          if git ls-files | grep -E '^(references/|app/|gradle/|gradlew|build.gradle|settings.gradle|gradle.properties)'; then
+            echo 'Reference Android files must never be tracked'; exit 1
+          fi

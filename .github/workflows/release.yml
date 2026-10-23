@@ -1,0 +1,56 @@
+name: Build sideload release
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Versión del IPA (por ejemplo, 0.1.0)'
+        required: true
+        type: string
+      build:
+        description: 'Número de compilación creciente'
+        required: true
+        type: string
+permissions:
+  contents: read
+concurrency:
+  group: remio-release
+  cancel-in-progress: false
+jobs:
+  build:
+    runs-on: macos-26
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - name: Validate release version
+        env:
+          VERSION: ${{ inputs.version }}
+          BUILD: ${{ inputs.build }}
+        run: |
+          python3 - <<'PY'
+          import os, re
+          assert re.fullmatch(r'\d+\.\d+\.\d+', os.environ['VERSION']), 'Invalid version'
+          assert re.fullmatch(r'[1-9]\d*', os.environ['BUILD']), 'Invalid build'
+          PY
+      - run: swift test
+      - run: python3 -m unittest discover -s tests/distribution -v
+      - name: Archive and package device IPA
+        env:
+          REMIO_VERSION: ${{ inputs.version }}
+          REMIO_BUILD_NUMBER: ${{ inputs.build }}
+        run: bash scripts/build-sideload-ipa.sh
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: Remio-sideload
+          path: dist/Remio.ipa*
+      - name: Create draft release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          VERSION: ${{ inputs.version }}
+        run: gh release create "v$VERSION" dist/Remio.ipa dist/Remio.ipa.sha256 --target "$(git rev-parse HEAD)" --title "Remio $VERSION" --notes-file docs/RELEASE-NOTES.md --draft
+  # Publishing the reviewed draft triggers the separate source-update workflow.

@@ -1,0 +1,40 @@
+# Local reference projects (never distribute Android or experimental Portal patches)
+/references/
+/app/
+/gradle/
+/gradlew
+/gradlew.bat
+/*.gradle.kts
+/gradle.properties
+/local.properties
+/.gradle/
+/.idea/
+*.iml
+*.apk
+
+# Xcode and Swift local state
+.DS_Store
+DerivedData/
+/build/
+/Build/
+/.build/
+/.swiftpm/
+xcuserdata/
+*.xcuserstate
+*.xcarchive
+*.dSYM/
+*.ipa
+*.mobileprovision
+*.provisionprofile
+*.p12
+*.p8
+*.pem
+*.key
+.env
+.env.*
+!.env.example
+
+# Generated release artifacts (published by the release pipeline)
+/dist/
+__pycache__/
+*.pyc
