@@ -10,9 +10,9 @@ struct RemioApp: App {
     var body: some Scene {
         WindowGroup {
             TabView(selection: $selectedTab) {
-                Tab("Mando", systemImage: "cursorarrow.motionlines", value: 0) { RemoteView() }
-                Tab("Herramientas", systemImage: "square.grid.2x2", value: 1) { AdministrationView() }
-                Tab("Ajustes", systemImage: "gear", value: 2) { SettingsView() }
+                Tab(String(localized: "Mando"), systemImage: "cursorarrow.motionlines", value: 0) { RemoteView() }
+                Tab(String(localized: "Herramientas"), systemImage: "square.grid.2x2", value: 1) { AdministrationView() }
+                Tab(String(localized: "Ajustes"), systemImage: "gear", value: 2) { SettingsView() }
             }
             .tint(RemioTheme.accent)
             .preferredColorScheme(.dark)
@@ -37,6 +37,8 @@ struct RemioApp: App {
             #if DEBUG && targetEnvironment(simulator)
             .task {
                 if ProcessInfo.processInfo.environment["REMIO_TOOLS_PREVIEW"] == "1" { selectedTab = 1 }
+                if ProcessInfo.processInfo.arguments.contains("--localization-self-test") { localizationSelfTest() }
+                if ProcessInfo.processInfo.environment["REMIO_SETTINGS_PREVIEW"] == "1" { selectedTab = 2 }
                 if ProcessInfo.processInfo.arguments.contains("--keychain-self-test") { keychainSelfTest() }
                 if ProcessInfo.processInfo.environment["REMIO_CONNECTION_PREVIEW"] == "1" { remote.showConnection = true }
             }
@@ -51,6 +53,32 @@ struct RemioApp: App {
     }
 
     #if DEBUG && targetEnvironment(simulator)
+    /// Checks compiled catalogs in the real app bundle without sending Portal commands.
+    private func localizationSelfTest() {
+        var result: [String: String] = [:]
+        for language in ["es", "en"] {
+            guard let path = Bundle.main.path(forResource: language, ofType: "lproj"), let bundle = Bundle(path: path) else {
+                result[language] = "FAIL: missing language bundle"
+                continue
+            }
+            let expected = language == "en" ? "Settings" : "Ajustes"
+            let settings = bundle.localizedString(forKey: "Ajustes", value: nil, table: nil)
+            let plural = bundle.localizedString(forKey: "Enviar %lld fotos", value: nil, table: nil)
+            let one = String.localizedStringWithFormat(plural, Int64(1))
+            let two = String.localizedStringWithFormat(plural, Int64(2))
+            let permission = bundle.localizedString(forKey: "NSLocalNetworkUsageDescription", value: nil, table: "InfoPlist")
+            let valid = settings == expected && one == (language == "en" ? "Send 1 photo" : "Enviar 1 foto") && two == (language == "en" ? "Send 2 photos" : "Enviar 2 fotos") && permission != "NSLocalNetworkUsageDescription"
+            result[language] = valid ? "PASS" : "FAIL: \(settings), \(one), \(two)"
+        }
+        result["selected"] = Bundle.main.preferredLocalizations.first
+        result["settings"] = String(localized: "Ajustes")
+        result["connectionError"] = PortalError.inaccessible.localizedDescription
+        if let folder = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first,
+           let data = try? JSONSerialization.data(withJSONObject: result, options: [.sortedKeys, .prettyPrinted]) {
+            try? data.write(to: folder.appendingPathComponent("localization-self-test.json"))
+        }
+    }
+
     /// Opt-in integration check in the real app sandbox, using an isolated temporary account.
     /// Does not use or modify the Portal's session, or send any network request.
     private func keychainSelfTest() {

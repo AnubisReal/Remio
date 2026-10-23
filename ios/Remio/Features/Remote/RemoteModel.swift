@@ -3,7 +3,7 @@ import Observation
 
 @MainActor @Observable
 final class RemoteModel {
-    private(set) var deviceName = "Tu Portal"
+    private(set) var deviceName = String(localized: "Tu Portal")
     private(set) var endpoint: PortalEndpoint?
     private(set) var isConnected = false
     private(set) var isConnecting = false
@@ -16,7 +16,7 @@ final class RemoteModel {
     private(set) var inputUnavailable = false
     var message: String?
     var showConnection = false
-    var feedback = "Desliza para mover · toca para seleccionar"
+    var feedback = String(localized: "Desliza para mover · toca para seleccionar")
     private(set) var keyboardContext = UUID()
     var automaticKeyboardEnabled = true
     private(set) var keyboardDetectionAvailable: Bool?
@@ -37,16 +37,16 @@ final class RemoteModel {
         do {
             credential = try storage.load()
             endpoint = credential?.endpoint
-            deviceName = credential?.name ?? "Tu Portal"
+            deviceName = credential?.name ?? String(localized: "Tu Portal")
             needsPairing = credential == nil
         } catch { message = PortalError.keychain.localizedDescription }
     }
 
     var status: String {
-        if isPairing { return "Vinculando…" }
-        if isConnecting { return "Conectando…" }
-        if isConnected { return "Conectado" }
-        return needsPairing ? "Sin vincular" : "Sin conexión"
+        if isPairing { return String(localized: "Vinculando…") }
+        if isConnecting { return String(localized: "Conectando…") }
+        if isConnected { return String(localized: "Conectado") }
+        return needsPairing ? String(localized: "Sin vincular") : String(localized: "Sin conexión")
     }
 
     var canUseTouchpad: Bool { isConnected && !inputUnavailable }
@@ -100,7 +100,7 @@ final class RemoteModel {
                 self.apps = apps.sorted { $0.label.localizedStandardCompare($1.label) == .orderedAscending }
                 isConnected = true
                 inputUnavailable = false
-                feedback = "Desliza para mover · toca para seleccionar"
+                feedback = String(localized: "Desliza para mover · toca para seleccionar")
             }
             if keyboardDetectionAvailable == nil {
                 await checkKeyboardCapability(api: api, generation: generation)
@@ -144,7 +144,7 @@ final class RemoteModel {
         } catch is CancellationError { }
         catch {
             message = (error as? PortalError) == .unauthorized
-                ? "El PIN no coincide o ha caducado. Comprueba el código que muestra Immortal."
+                ? String(localized: "El PIN no coincide o ha caducado. Comprueba el código que muestra Immortal.")
                 : readable(error)
         }
         // refresh() also checks isPairing; monitor will reconnect after this completes.
@@ -160,8 +160,8 @@ final class RemoteModel {
             needsPairing = true
             media = nil
             apps = []
-            deviceName = "Tu Portal"
-            feedback = "Vincula un Portal para usar el mando"
+            deviceName = String(localized: "Tu Portal")
+            feedback = String(localized: "Vincula un Portal para usar el mando")
         } catch { message = PortalError.keychain.localizedDescription }
     }
 
@@ -199,7 +199,7 @@ final class RemoteModel {
     func editText(_ edit: PortalTextEdit) -> Bool {
         guard !edit.isEmpty else { return true }
         do { try edit.validate() }
-        catch { message = "La edición es demasiado grande. Escribe o borra un fragmento más pequeño."; return false }
+        catch { message = String(localized: "La edición es demasiado grande. Escribe o borra un fragmento más pequeño."); return false }
         if replaceFirstKeyboardEdit {
             let accepted = accept(.text(edit.next))
             if accepted { replaceFirstKeyboardEdit = false }
@@ -230,7 +230,7 @@ final class RemoteModel {
             }
         } else {
             guard pending.count < 16 else {
-                message = "El Portal está ocupado. Espera un momento antes de seguir escribiendo."
+                message = String(localized: "El Portal está ocupado. Espera un momento antes de seguir escribiendo.")
                 return false
             }
             pending.append(command)
@@ -265,7 +265,7 @@ final class RemoteModel {
                 if command == .tap, automaticKeyboardEnabled {
                     await detectKeyboard(api: api, generation: generation, context: context)
                 }
-                if case .text = command { feedback = "Texto enviado al campo seleccionado" }
+                if case .text = command { feedback = String(localized: "Texto enviado al campo seleccionado") }
             } catch is CancellationError { return }
             catch {
                 guard self.generation == generation else { return }

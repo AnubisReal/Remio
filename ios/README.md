@@ -28,3 +28,7 @@ bash scripts/build-sideload-ipa.sh
 El primer script mantiene la firma del simulador para que funcione Keychain. El segundo produce un IPA Release para dispositivos arm64, que debe firmar el instalador de carga lateral. No instalar el IPA sin firma directamente con Xcode ni desactivar la firma del simulador.
 
 Documentación: [distribución](../docs/DISTRIBUTION.md), [herramientas](../docs/TOOLKIT-PARITY.md) y [conexiones](../docs/DUAL-CONNECTION.md).
+
+## Idiomas
+
+La interfaz, errores y permisos admiten español e inglés mediante catálogos nativos. iOS selecciona el idioma compatible preferido del usuario. Consulta [localización](../docs/LOCALIZATION.md) para mantener traducciones y probar cada idioma.

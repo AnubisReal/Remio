@@ -16,7 +16,7 @@ struct SettingsView: View {
         @Bindable var remote = remote
         NavigationStack {
             Form {
-                Section("Tu Portal") {
+                Section(String(localized: "Tu Portal")) {
                     VStack(alignment: .leading, spacing: 20) {
                         HStack(spacing: 12) {
                             Image(systemName: "display")
@@ -27,23 +27,23 @@ struct SettingsView: View {
                             Spacer(minLength: 8)
                             if remote.endpoint != nil {
                                 Menu {
-                                    Button("Olvidar vinculación del mando", systemImage: "trash", role: .destructive) {
+                                    Button(String(localized: "Olvidar vinculación del mando"), systemImage: "trash", role: .destructive) {
                                         confirmForget = true
                                     }
                                 } label: {
                                     Image(systemName: "ellipsis").frame(width: 44, height: 44)
                                 }
-                                .accessibilityLabel("Opciones del Portal")
+                                .accessibilityLabel(String(localized: "Opciones del Portal"))
                             }
                         }
                         Grid(alignment: .leading, horizontalSpacing: 24, verticalSpacing: 6) {
                             GridRow {
-                                connectionHeading("Mando", symbol: "cursorarrow.motionlines")
+                                connectionHeading(String(localized: "Mando"), symbol: "cursorarrow.motionlines")
                                 connectionHeading("ADB", symbol: "cable.connector")
                             }
                             GridRow {
                                 Text(remote.status)
-                                Text(administration.isConnected ? "Conectado" : administration.status)
+                                Text(administration.isConnected ? String(localized: "Conectado") : administration.status)
                             }
                             .font(.subheadline.weight(.medium))
                             .fixedSize(horizontal: false, vertical: true)
@@ -53,7 +53,7 @@ struct SettingsView: View {
                     .padding(.vertical, 8)
                     Button { remote.showConnection = true } label: {
                         HStack {
-                            Text("Gestionar conexiones")
+                            Text(String(localized: "Gestionar conexiones"))
                             Spacer()
                             Image(systemName: "chevron.right").font(.caption.weight(.semibold))
                         }
@@ -61,15 +61,15 @@ struct SettingsView: View {
                 }
                 .listRowBackground(RemioTheme.surface)
                 Section {
-                    Toggle("Abrir teclado automáticamente", isOn: $remote.automaticKeyboardEnabled)
-                } header: { Text("Teclado") } footer: {
-                    Text("Al abrirse automáticamente, vacía el campo del Portal.")
+                    Toggle(String(localized: "Abrir teclado automáticamente"), isOn: $remote.automaticKeyboardEnabled)
+                } header: { Text(String(localized: "Teclado")) } footer: {
+                    Text(String(localized: "Al abrirse automáticamente, vacía el campo del Portal."))
                 }
                 .listRowBackground(RemioTheme.surface)
                 Section {
-                    Toggle("Mando direccional", isOn: $directionalControlEnabled)
-                } header: { Text("Controles") } footer: {
-                    Text("Desliza desde el borde del trackpad para cambiar de mando. Requiere ADB.")
+                    Toggle(String(localized: "Mando direccional"), isOn: $directionalControlEnabled)
+                } header: { Text(String(localized: "Controles")) } footer: {
+                    Text(String(localized: "Desliza desde el borde del trackpad para cambiar de mando. Requiere ADB."))
                 }
                 .listRowBackground(RemioTheme.surface)
                 Section {
@@ -85,18 +85,18 @@ struct SettingsView: View {
                     if icons.isChanging {
                         HStack(spacing: 12) {
                             ProgressView()
-                            Text("Cambiando icono…").font(.footnote)
+                            Text(String(localized: "Cambiando icono…")).font(.footnote)
                         }
                     }
-                } header: { Text("Icono de la app") } footer: {
-                    Text("Elige cómo aparece Remio en tu pantalla de inicio. iOS puede mostrar una confirmación al cambiarlo.")
+                } header: { Text(String(localized: "Icono de la app")) } footer: {
+                    Text(String(localized: "Elige cómo aparece Remio en tu pantalla de inicio. iOS puede mostrar una confirmación al cambiarlo."))
                 }
                 .listRowBackground(RemioTheme.surface)
                 Section {
                     socialProfile("GitHub", asset: "SocialGitHub", url: URL(string: "https://github.com/AnubisReal"))
                     socialProfile("Instagram", asset: "SocialInstagram", url: URL(string: "https://www.instagram.com/anubisreal/"))
                     socialProfile("X", asset: "SocialX", url: URL(string: "https://x.com/Anubisreal23"))
-                } header: { Text("Sobre el creador") } footer: {
+                } header: { Text(String(localized: "Sobre el creador")) } footer: {
                     Text("Versión \(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "—")")
                         .font(.footnote).foregroundStyle(.secondary)
                         .frame(maxWidth: .infinity, alignment: .center)
@@ -107,16 +107,16 @@ struct SettingsView: View {
             .scrollContentBackground(.hidden)
             .background(RemioTheme.background)
             .toolbarBackground(.hidden, for: .navigationBar)
-            .navigationTitle("Ajustes")
-            .confirmationDialog("¿Olvidar la vinculación del mando?", isPresented: $confirmForget, titleVisibility: .visible) {
-                Button("Olvidar en este iPhone", role: .destructive) { remote.forget() }
-            } message: { Text("Elimina la credencial del mando guardada en este iPhone. Tendrás que introducir el PIN de nuevo. La autorización ADB se conserva.") }
+            .navigationTitle(String(localized: "Ajustes"))
+            .confirmationDialog(String(localized: "¿Olvidar la vinculación del mando?"), isPresented: $confirmForget, titleVisibility: .visible) {
+                Button(String(localized: "Olvidar en este iPhone"), role: .destructive) { remote.forget() }
+            } message: { Text(String(localized: "Elimina la credencial del mando guardada en este iPhone. Tendrás que introducir el PIN de nuevo. La autorización ADB se conserva.")) }
             .onAppear { icons.refreshSelection() }
             .onChange(of: scenePhase) { _, phase in
                 if phase == .active { icons.refreshSelection() }
             }
-            .alert("Icono de la app", isPresented: Binding(get: { icons.errorMessage != nil }, set: { if !$0 { icons.errorMessage = nil } })) {
-                Button("Aceptar", role: .cancel) { icons.errorMessage = nil }
+            .alert(String(localized: "Icono de la app"), isPresented: Binding(get: { icons.errorMessage != nil }, set: { if !$0 { icons.errorMessage = nil } })) {
+                Button(String(localized: "Aceptar"), role: .cancel) { icons.errorMessage = nil }
             } message: { Text(icons.errorMessage ?? "") }
         }
     }
@@ -146,7 +146,7 @@ struct SettingsView: View {
     private var deviceIdentity: some View {
         let titleFont = UIFont.preferredFont(forTextStyle: .headline)
         let detailFont = UIFont.monospacedSystemFont(ofSize: UIFont.preferredFont(forTextStyle: .caption1).pointSize, weight: .regular)
-        let detail = remote.endpoint?.host ?? "Sin vincular"
+        let detail = remote.endpoint?.host ?? String(localized: "Sin vincular")
         func ink(_ text: String, _ font: UIFont) -> CGRect {
             CTLineGetBoundsWithOptions(CTLineCreateWithAttributedString(
                 NSAttributedString(string: text, attributes: [.font: font])), [.useGlyphPathBounds])
@@ -193,8 +193,8 @@ struct SettingsView: View {
         }
         .buttonStyle(.plain)
         .disabled(icons.isChanging)
-        .accessibilityLabel("Icono \(icon.title)")
-        .accessibilityValue(isSelected ? "Seleccionado" : "")
-        .accessibilityHint(isSelected ? "Icono actual de la app" : "Cambia el icono en la pantalla de inicio")
+        .accessibilityLabel(String(localized: "Icono \(icon.title)"))
+        .accessibilityValue(isSelected ? String(localized: "Seleccionado") : "")
+        .accessibilityHint(isSelected ? String(localized: "Icono actual de la app") : String(localized: "Cambia el icono en la pantalla de inicio"))
     }
 }

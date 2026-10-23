@@ -21,12 +21,12 @@ struct APKProfilesView: View {
     private var root: URL { FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0].appendingPathComponent("APKProfiles", isDirectory: true) }
     var body: some View {
         Section {
-            Button("Crear lote de APK", systemImage: "plus") { importing = true }.disabled(tools.busy)
+            Button(String(localized: "Crear lote de APK"), systemImage: "plus") { importing = true }.disabled(tools.busy)
             ForEach(profiles) { profile in
                 Menu {
-                    Button("Instalar lote", systemImage: "square.and.arrow.down") { selected = profile; confirmApply = true }
+                    Button(String(localized: "Instalar lote"), systemImage: "square.and.arrow.down") { selected = profile; confirmApply = true }
                         .disabled(!tools.adb.isConnected || tools.busy)
-                    Button("Eliminar lote del iPhone", systemImage: "trash", role: .destructive) { selected = profile; confirmDelete = true }.disabled(tools.busy)
+                    Button(String(localized: "Eliminar lote del iPhone"), systemImage: "trash", role: .destructive) { selected = profile; confirmDelete = true }.disabled(tools.busy)
                 } label: {
                     HStack {
                         VStack(alignment: .leading, spacing: 4) {
@@ -38,24 +38,24 @@ struct APKProfilesView: View {
                     }
                 }
             }
-        } footer: { Text("Guarda varios APK como un lote para instalarlos juntos.") }
+        } footer: { Text(String(localized: "Guarda varios APK como un lote para instalarlos juntos.")) }
         .onAppear { load() }
         .fileImporter(isPresented: $importing, allowedContentTypes: [UTType(filenameExtension: "apk") ?? .data], allowsMultipleSelection: true) { result in
             do { urls = try result.get(); guard !urls.isEmpty, urls.count <= 30 else { throw ADBToolError.invalidData }; name = ""; naming = true }
             catch { tools.error = error.localizedDescription }
         }
-        .alert("Nombre del lote", isPresented: $naming) {
-            TextField("Nombre", text: $name)
-            Button("Guardar") { save() }.disabled(name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-            Button("Cancelar", role: .cancel) { urls = [] }
+        .alert(String(localized: "Nombre del lote"), isPresented: $naming) {
+            TextField(String(localized: "Nombre"), text: $name)
+            Button(String(localized: "Guardar")) { save() }.disabled(name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+            Button(String(localized: "Cancelar"), role: .cancel) { urls = [] }
         }
-        .confirmationDialog("¿Instalar todos los APK del lote?", isPresented: $confirmApply, titleVisibility: .visible) {
-            Button("Instalar lote") {
+        .confirmationDialog(String(localized: "¿Instalar todos los APK del lote?"), isPresented: $confirmApply, titleVisibility: .visible) {
+            Button(String(localized: "Instalar lote")) {
                 guard let selected else { return }
-                tools.perform("Instalar lote \(selected.name)") {
+                tools.perform(.installBatch(selected.name)) {
                     for (index, file) in selected.files.enumerated() {
                         guard !file.contains("/"), file.hasSuffix(".apk") else { throw ADBToolError.invalidData }
-                        tools.setProgress("Instalando APK \(index+1) de \(selected.files.count)")
+                        tools.setProgress(String(localized: "Instalando APK \(index+1) de \(selected.files.count)"))
                         let url = root.appendingPathComponent(selected.id.uuidString).appendingPathComponent(file)
                         let size = try url.resourceValues(forKeys: [.fileSizeKey]).fileSize ?? 0
                         guard size > 0, size <= ADBTools.limit else { throw ADBToolError.tooLarge }
@@ -64,15 +64,15 @@ struct APKProfilesView: View {
                 }
             }
         }
-        .confirmationDialog("¿Eliminar este lote del iPhone?", isPresented: $confirmDelete, titleVisibility: .visible) {
-            Button("Eliminar lote", role: .destructive) {
+        .confirmationDialog(String(localized: "¿Eliminar este lote del iPhone?"), isPresented: $confirmDelete, titleVisibility: .visible) {
+            Button(String(localized: "Eliminar lote"), role: .destructive) {
                 guard let selected else { return }
                 do {
                     try FileManager.default.removeItem(at: root.appendingPathComponent(selected.id.uuidString))
                     profiles.removeAll { $0.id == selected.id }; persist()
                 } catch { tools.error = error.localizedDescription }
             }
-        } message: { Text("No desinstala las apps del Portal.") }
+        } message: { Text(String(localized: "No desinstala las apps del Portal.")) }
     }
     private func load() {
         guard let data = UserDefaults.standard.data(forKey: "remio.apk.profiles"),

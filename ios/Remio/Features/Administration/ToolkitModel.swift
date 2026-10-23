@@ -19,24 +19,24 @@ final class ToolkitModel {
            let entries = try? JSONDecoder().decode([ToolkitHistory].self, from: data) { history = entries }
     }
 
-    func perform(_ name: String, requiresPortal: Bool = true, operation: @escaping @MainActor () async throws -> Void) {
+    func perform(_ activity: ToolkitActivity, requiresPortal: Bool = true, operation: @escaping @MainActor () async throws -> Void) {
         guard !busy else { return }
-        busy = true; error = nil; progress = name
+        busy = true; error = nil; progress = activity.title
         Task {
             defer { busy = false; progress = "" }
             do {
                 if requiresPortal { try await validatePortal() }
                 try await operation()
-                record(name, success: true)
+                record(activity, success: true)
             }
-            catch { self.error = error.localizedDescription; record(name, success: false) }
+            catch { self.error = error.localizedDescription; record(activity, success: false) }
         }
     }
 
     func setProgress(_ value: String) { progress = value }
 
-    private func record(_ name: String, success: Bool) {
-        history.insert(ToolkitHistory(id: UUID(), date: .now, action: name, success: success), at: 0)
+    private func record(_ activity: ToolkitActivity, success: Bool) {
+        history.insert(ToolkitHistory(id: UUID(), date: .now, action: activity.title, success: success, activity: activity), at: 0)
         history = Array(history.prefix(100))
         if let data = try? JSONEncoder().encode(history) { UserDefaults.standard.set(data, forKey: "remio.tools.history") }
     }
@@ -49,7 +49,7 @@ final class ToolkitModel {
         let device = try await shell("getprop ro.product.device").lowercased()
         guard manufacturer.contains("facebook") || manufacturer.contains("meta") ||
               model.contains("portal") || ["cipher", "aloha", "aloha_plus", "woody", "cambria", "ripley"].contains(device) else {
-            throw ADBToolError.refused("El equipo ADB no se identifica como un Portal.")
+            throw ADBToolError.refused(String(localized: "El equipo ADB no se identifica como un Portal."))
         }
     }
 
@@ -74,21 +74,21 @@ final class ToolkitModel {
 
     func refreshInfo() async throws {
         var result: [String: String] = [:]
-        for (label, key) in [("Fabricante", "ro.product.manufacturer"), ("Modelo", "ro.product.model"),
+        for (label, key) in [(String(localized: "Fabricante"), "ro.product.manufacturer"), (String(localized: "Modelo"), "ro.product.model"),
                              ("Android", "ro.build.version.release"), ("SDK", "ro.build.version.sdk")] {
             result[label] = try await shell("getprop " + key)
         }
         let memory = try await shell("cat /proc/meminfo")
         if let line = memory.split(whereSeparator: \.isNewline).first(where: { $0.hasPrefix("MemAvailable:") }),
            let kb = Int64(line.split(whereSeparator: \.isWhitespace).dropFirst().first ?? "") {
-            result["RAM disponible"] = ByteCountFormatter.string(fromByteCount: kb * 1024, countStyle: .memory)
+            result[String(localized: "RAM disponible")] = ByteCountFormatter.string(fromByteCount: kb * 1024, countStyle: .memory)
         }
         let disk = try await shell("df -k /sdcard")
         if let line = disk.split(whereSeparator: \.isNewline).last {
             let fields = line.split(whereSeparator: \.isWhitespace)
             if fields.count >= 4, let total = Int64(fields[1]), let free = Int64(fields[3]) {
-                result["Almacenamiento"] = ByteCountFormatter.string(fromByteCount: total * 1024, countStyle: .file)
-                result["Espacio libre"] = ByteCountFormatter.string(fromByteCount: free * 1024, countStyle: .file)
+                result[String(localized: "Almacenamiento")] = ByteCountFormatter.string(fromByteCount: total * 1024, countStyle: .file)
+                result[String(localized: "Espacio libre")] = ByteCountFormatter.string(fromByteCount: free * 1024, countStyle: .file)
             }
         }
         information = result
@@ -109,12 +109,12 @@ final class ToolkitModel {
                 total += kb * 1024
             }
         }
-        return versions + (total > 0 ? "\nTamaño: " + ByteCountFormatter.string(fromByteCount: total, countStyle: .file) : "")
+        return versions + (total > 0 ? "\n" + String(localized: "Tamaño: \(ByteCountFormatter.string(fromByteCount: total, countStyle: .file))") : "")
     }
 
     func uninstall(_ package: String) async throws {
         guard packages.contains(where: { $0.packageName == package }), package != "com.immortal.launcher" else {
-            throw ADBToolError.refused("Esta app no se puede eliminar desde Remio para conservar el mando del Portal.")
+            throw ADBToolError.refused(String(localized: "Esta app no se puede eliminar desde Remio para conservar el mando del Portal."))
         }
         let result = try await shell("pm uninstall " + ADBTools.quote(ADBTools.package(package)))
         guard result == "Success" else { throw ADBToolError.refused(result) }
@@ -137,7 +137,7 @@ final class ToolkitModel {
     }
 
     func install(_ data: Data) async throws {
-        guard data.starts(with: [0x50, 0x4b, 0x03, 0x04]) else { throw ADBToolError.refused("Selecciona un archivo APK válido.") }
+        guard data.starts(with: [0x50, 0x4b, 0x03, 0x04]) else { throw ADBToolError.refused(String(localized: "Selecciona un archivo APK válido.")) }
         let path = "/data/local/tmp/remio-" + UUID().uuidString + ".apk"
         try await push(data, to: path)
         do {
@@ -166,12 +166,12 @@ final class ToolkitModel {
 
     func setUpdates(blocked: Bool) async throws {
         try await refreshUpdates()
-        guard !otaPackages.isEmpty else { throw ADBToolError.refused("No se encontraron los componentes de actualización compatibles.") }
+        guard !otaPackages.isEmpty else { throw ADBToolError.refused(String(localized: "No se encontraron los componentes de actualización compatibles.")) }
         for package in otaPackages {
             _ = try await shell((blocked ? "pm disable-user --user 0 " : "pm enable --user 0 ") + ADBTools.quote(package))
         }
         try await refreshUpdates()
-        guard blocked ? disabledOTA.count == otaPackages.count : disabledOTA.isEmpty else { throw ADBToolError.refused("No se pudo verificar el cambio.") }
+        guard blocked ? disabledOTA.count == otaPackages.count : disabledOTA.isEmpty else { throw ADBToolError.refused(String(localized: "No se pudo verificar el cambio.")) }
     }
     private static let settings = ["screen_brightness", "screen_off_timeout", "accelerometer_rotation", "user_rotation", "volume_music", "volume_ring", "volume_alarm"]
 
@@ -181,7 +181,7 @@ final class ToolkitModel {
         var entries: [String: Data] = [:], records: [ToolkitBackup.App] = [], settings: [String: String] = [:]
         var total = 0
         for (index, package) in selected.sorted().enumerated() {
-            progress = "Copiando app \(index+1) de \(selected.count)"
+            progress = String(localized: "Copiando app \(index+1) de \(selected.count)")
             let paths = try await shell("pm path " + ADBTools.quote(ADBTools.package(package)))
             var names: [String] = []
             for (part, line) in paths.split(whereSeparator: \.isNewline).enumerated() {
@@ -208,7 +208,7 @@ final class ToolkitModel {
         let manifest = ToolkitBackup(formatVersion: 1, createdAt: Int64(Date().timeIntervalSince1970*1000),
             device: .init(manufacturer: manufacturer, model: model, sdk: sdk), settings: settings, apps: records)
         entries["manifest.json"] = try JSONEncoder().encode(manifest)
-        progress = "Preparando archivo ZIP"
+        progress = String(localized: "Preparando archivo ZIP")
         return try await Task.detached { try ToolkitArchive.encode(entries) }.value
     }
 
@@ -217,10 +217,10 @@ final class ToolkitModel {
         let model = try await shell("getprop ro.product.model")
         let sdk = try await shell("getprop ro.build.version.sdk")
         guard manifest.device.model == model, manifest.device.sdk == sdk else {
-            throw ADBToolError.refused("Esta copia corresponde a otro modelo o versión de Android.")
+            throw ADBToolError.refused(String(localized: "Esta copia corresponde a otro modelo o versión de Android."))
         }
         for (index, app) in manifest.apps.enumerated() {
-            progress = "Restaurando app \(index+1) de \(manifest.apps.count)"
+            progress = String(localized: "Restaurando app \(index+1) de \(manifest.apps.count)")
             if app.files.count == 1 { try await install(entries["apps/\(app.packageName)/\(app.files[0])"]!) }
             else {
                 let response = try await shell("pm install-create -r")

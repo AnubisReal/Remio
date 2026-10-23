@@ -41,18 +41,18 @@ enum PortalError: Error, LocalizedError, Equatable {
 
     var errorDescription: String? {
         switch self {
-        case .invalidAddress: "Usa una dirección IP de tu red local y el puerto del mando."
-        case .invalidPIN: "Introduce los seis números del PIN de Immortal."
-        case .unauthorized: "Necesitas vincular Remio con el PIN actual del Portal."
-        case .inaccessible: "No se puede conectar. Comprueba que ambos equipos estén en la misma Wi-Fi."
-        case .incompatible: "La respuesta del Portal no es compatible con este mando."
-        case .unavailableInput: "Immortal no tiene disponible el control táctil. No se han cambiado permisos."
-        case .noFocusedField: "Primero selecciona un campo de texto en el Portal."
-        case .notDispatched: "El Portal recibió la petición pero no pudo ejecutar la acción."
-        case .oversizedResponse: "El Portal devolvió una respuesta demasiado grande."
-        case .busy: "Espera a que termine la acción anterior."
-        case .keychain: "No se pudo acceder a la vinculación guardada en el llavero del iPhone."
-        case .server(let code): "El Portal no pudo atender la petición (\(code))."
+        case .invalidAddress: String(localized: "Usa una dirección IP de tu red local y el puerto del mando.")
+        case .invalidPIN: String(localized: "Introduce los seis números del PIN de Immortal.")
+        case .unauthorized: String(localized: "Necesitas vincular Remio con el PIN actual del Portal.")
+        case .inaccessible: String(localized: "No se puede conectar. Comprueba que ambos equipos estén en la misma Wi-Fi.")
+        case .incompatible: String(localized: "La respuesta del Portal no es compatible con este mando.")
+        case .unavailableInput: String(localized: "Immortal no tiene disponible el control táctil. No se han cambiado permisos.")
+        case .noFocusedField: String(localized: "Primero selecciona un campo de texto en el Portal.")
+        case .notDispatched: String(localized: "El Portal recibió la petición pero no pudo ejecutar la acción.")
+        case .oversizedResponse: String(localized: "El Portal devolvió una respuesta demasiado grande.")
+        case .busy: String(localized: "Espera a que termine la acción anterior.")
+        case .keychain: String(localized: "No se pudo acceder a la vinculación guardada en el llavero del iPhone.")
+        case .server(let code): String(localized: "El Portal no pudo atender la petición (\(code)).")
         }
     }
 }

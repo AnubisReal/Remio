@@ -32,13 +32,13 @@ struct TrackpadView: View {
         .onChange(of: remote.canUseTouchpad) { _, _ in reset() }
         .onDisappear { reset() }
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("Trackpad del Portal")
-        .accessibilityHint("Desliza para mover el cursor en el Portal y toca para hacer clic")
-        .accessibilityAction(named: Text("Clic")) { remote.enqueue(.tap) }
-        .accessibilityAction(named: Text("Mover arriba")) { remote.move(dx: 0, dy: -30) }
-        .accessibilityAction(named: Text("Mover abajo")) { remote.move(dx: 0, dy: 30) }
-        .accessibilityAction(named: Text("Mover izquierda")) { remote.move(dx: -30, dy: 0) }
-        .accessibilityAction(named: Text("Mover derecha")) { remote.move(dx: 30, dy: 0) }
+        .accessibilityLabel(String(localized: "Trackpad del Portal"))
+        .accessibilityHint(String(localized: "Desliza para mover el cursor en el Portal y toca para hacer clic"))
+        .accessibilityAction(named: Text(String(localized: "Clic"))) { remote.enqueue(.tap) }
+        .accessibilityAction(named: Text(String(localized: "Mover arriba"))) { remote.move(dx: 0, dy: -30) }
+        .accessibilityAction(named: Text(String(localized: "Mover abajo"))) { remote.move(dx: 0, dy: 30) }
+        .accessibilityAction(named: Text(String(localized: "Mover izquierda"))) { remote.move(dx: -30, dy: 0) }
+        .accessibilityAction(named: Text(String(localized: "Mover derecha"))) { remote.move(dx: 30, dy: 0) }
     }
 
     private func reset() {
@@ -68,17 +68,17 @@ struct RemoteControlSurface: View {
                             let diameter = min(geometry.size.width - 32, geometry.size.height - 16)
                             ZStack {
                                 Circle().strokeBorder(.primary.opacity(0.12), lineWidth: 1)
-                                key("Arriba", symbol: "chevron.up", code: 19).offset(y: -diameter * 0.34)
-                                key("Abajo", symbol: "chevron.down", code: 20).offset(y: diameter * 0.34)
-                                key("Izquierda", symbol: "chevron.left", code: 21).offset(x: -diameter * 0.34)
-                                key("Derecha", symbol: "chevron.right", code: 22).offset(x: diameter * 0.34)
-                                key("Seleccionar", symbol: "circle.fill", code: 23)
+                                key(String(localized: "Arriba"), symbol: "chevron.up", code: 19).offset(y: -diameter * 0.34)
+                                key(String(localized: "Abajo"), symbol: "chevron.down", code: 20).offset(y: diameter * 0.34)
+                                key(String(localized: "Izquierda"), symbol: "chevron.left", code: 21).offset(x: -diameter * 0.34)
+                                key(String(localized: "Derecha"), symbol: "chevron.right", code: 22).offset(x: diameter * 0.34)
+                                key(String(localized: "Seleccionar"), symbol: "circle.fill", code: 23)
                                     .background(.primary.opacity(0.06), in: Circle())
                             }
                             .frame(width: diameter, height: diameter)
                             .frame(maxWidth: .infinity, maxHeight: .infinity)
                         }
-                        if !adb.isConnected { Text("Conecta ADB para usar las flechas").font(.caption).foregroundStyle(.secondary) }
+                        if !adb.isConnected { Text(String(localized: "Conecta ADB para usar las flechas")).font(.caption).foregroundStyle(.secondary) }
                     }.padding(20)
                 } else {
                     TrackpadView(isDragging: $isDragging)
@@ -97,15 +97,15 @@ struct RemoteControlSurface: View {
             if directionalControlEnabled {
             HStack(spacing: 10) {
                 modeButton("Trackpad", selected: !directional, mode: false)
-                modeButton("Mando direccional", selected: directional, mode: true)
+                modeButton(String(localized: "Mando direccional"), selected: directional, mode: true)
             }
             }
         }
         .onChange(of: directionalControlEnabled) { _, enabled in
             if !enabled { directional = false; isDragging = false }
         }
-        .alert("Mando direccional", isPresented: Binding(get: { error != nil }, set: { if !$0 { error = nil } })) {
-            Button("Aceptar", role: .cancel) { error = nil }
+        .alert(String(localized: "Mando direccional"), isPresented: Binding(get: { error != nil }, set: { if !$0 { error = nil } })) {
+            Button(String(localized: "Aceptar"), role: .cancel) { error = nil }
         } message: { Text(error ?? "") }
     }
 

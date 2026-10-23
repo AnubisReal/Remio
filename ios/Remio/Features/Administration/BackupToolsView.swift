@@ -25,8 +25,8 @@ struct BackupToolsView: View {
 
     var body: some View {
         Section {
-            Button("Cargar apps del Portal", systemImage: "arrow.clockwise") {
-                tools.perform("Consultar apps para copia") { try await tools.refreshPackages() }
+            Button(String(localized: "Cargar apps del Portal"), systemImage: "arrow.clockwise") {
+                tools.perform(.backupApps) { try await tools.refreshPackages() }
             }.disabled(!ready)
             ForEach(tools.packages) { app in
                 Button {
@@ -39,26 +39,26 @@ struct BackupToolsView: View {
                     }
                 }.disabled(tools.busy)
             }
-            Button("Crear copia · \(selected.count) apps", systemImage: "square.and.arrow.up") {
+            Button(String(localized: "Crear copia · \(selected.count) apps"), systemImage: "square.and.arrow.up") {
                 let packages = selected
-                tools.perform("Crear copia de seguridad") {
+                tools.perform(.createBackup) {
                     document = PortalBackupDocument(data: try await tools.createBackup(packages: packages))
                     export = true
                 }
             }.disabled(!ready || selected.isEmpty)
-        } header: { Text("Nueva copia") } footer: {
-            Text("Incluye APK y ajustes seleccionados del sistema. No incluye datos privados de las apps, fotos ni sesiones.")
+        } header: { Text(String(localized: "Nueva copia")) } footer: {
+            Text(String(localized: "Incluye APK y ajustes seleccionados del sistema. No incluye datos privados de las apps, fotos ni sesiones."))
         }
         Section {
-            Button("Abrir copia ZIP", systemImage: "doc.zipper") { importing = true }.disabled(tools.busy)
+            Button(String(localized: "Abrir copia ZIP"), systemImage: "doc.zipper") { importing = true }.disabled(tools.busy)
             if let preview {
-                LabeledContent("Modelo", value: preview.device.model)
-                LabeledContent("Aplicaciones", value: String(preview.apps.count))
-                LabeledContent("Ajustes", value: String(preview.settings.count))
-                Toggle("Restaurar también ajustes", isOn: $restoreSettings)
-                Button("Restaurar copia", role: .destructive) { confirmRestore = true }.disabled(!ready)
+                LabeledContent(String(localized: "Modelo"), value: preview.device.model)
+                LabeledContent(String(localized: "Aplicaciones"), value: String(preview.apps.count))
+                LabeledContent(String(localized: "Ajustes"), value: String(preview.settings.count))
+                Toggle(String(localized: "Restaurar también ajustes"), isOn: $restoreSettings)
+                Button(String(localized: "Restaurar copia"), role: .destructive) { confirmRestore = true }.disabled(!ready)
             }
-        } header: { Text("Restaurar") }
+        } header: { Text(String(localized: "Restaurar")) }
         .fileExporter(isPresented: $export, document: document, contentType: .zip,
                       defaultFilename: "Remio-Portal-\(Date().formatted(.iso8601.year().month().day()))") { result in
             if case .failure(let error) = result { tools.error = error.localizedDescription }
@@ -71,21 +71,21 @@ struct BackupToolsView: View {
                 defer { if scoped { url.stopAccessingSecurityScopedResource() } }
                 guard (try url.resourceValues(forKeys: [.fileSizeKey]).fileSize ?? 0) <= ToolkitArchive.maxBytes else { throw ADBToolError.tooLarge }
                 let data = try Data(contentsOf: url)
-                tools.perform("Validar copia ZIP", requiresPortal: false) {
+                tools.perform(.validateBackup, requiresPortal: false) {
                     let decoded = try await Task.detached { try ToolkitArchive.decode(data) }.value
                     let manifest = try ToolkitBackup.inspect(decoded)
                     entries = decoded; preview = manifest; restoreSettings = false
                 }
             } catch { tools.error = error.localizedDescription }
         }
-        .confirmationDialog("¿Restaurar esta copia en el Portal?", isPresented: $confirmRestore, titleVisibility: .visible) {
-            Button("Restaurar", role: .destructive) {
+        .confirmationDialog(String(localized: "¿Restaurar esta copia en el Portal?"), isPresented: $confirmRestore, titleVisibility: .visible) {
+            Button(String(localized: "Restaurar"), role: .destructive) {
                 guard let entries else { return }
                 let settings = restoreSettings
-                tools.perform("Restaurar copia de seguridad") { try await tools.restoreBackup(entries, settings: settings) }
+                tools.perform(.restoreBackup) { try await tools.restoreBackup(entries, settings: settings) }
             }
         } message: {
-            Text(restoreSettings ? "Instalará las apps y modificará los ajustes incluidos. Debe coincidir el modelo y la versión de Android." : "Instalará las apps de la copia. No restaurará ajustes del sistema.")
+            Text(restoreSettings ? String(localized: "Instalará las apps y modificará los ajustes incluidos. Debe coincidir el modelo y la versión de Android.") : String(localized: "Instalará las apps de la copia. No restaurará ajustes del sistema."))
         }
     }
     private var ready: Bool { tools.adb.isConnected && !tools.busy }

@@ -1,0 +1,23 @@
+{
+  "sourceLanguage": "es",
+  "strings": {
+    "NSLocalNetworkUsageDescription": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remio busca tu Portal y se conecta a su mando y a ADB en tu Wi-Fi."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remio finds your Portal and connects to its remote and ADB over Wi-Fi."
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

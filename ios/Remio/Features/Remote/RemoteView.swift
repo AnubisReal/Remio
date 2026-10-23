@@ -30,18 +30,18 @@ struct RemoteView: View {
                     if !remote.isConnected { connectionCard }
                     HStack(spacing: 12) {
                         Button { appsDetent = .medium; showApps = true } label: { controlLabel("Apps", "square.grid.2x2") }
-                        Button { showKeyboard = true } label: { controlLabel("Teclado", "keyboard") }
-                        commandButton("Fotos", "photo.stack", .screensaver)
+                        Button { showKeyboard = true } label: { controlLabel(String(localized: "Teclado"), "keyboard") }
+                        commandButton(String(localized: "Fotos"), "photo.stack", .screensaver)
                     }.disabled(!remote.isConnected)
                     RemoteControlSurface(isDragging: $isDragging)
                     HStack(spacing: 12) {
-                        commandButton("Atrás", "chevron.backward", .back)
-                        commandButton("Inicio", "house", .home)
-                        commandButton("Recientes", "rectangle.on.rectangle", .recentApps)
+                        commandButton(String(localized: "Atrás"), "chevron.backward", .back)
+                        commandButton(String(localized: "Inicio"), "house", .home)
+                        commandButton(String(localized: "Recientes"), "rectangle.on.rectangle", .recentApps)
                     }.disabled(!remote.isConnected)
                     HStack(spacing: 12) {
-                        commandButton("Subir página", "arrow.up.to.line", .scrollUp)
-                        commandButton("Bajar página", "arrow.down.to.line", .scrollDown)
+                        commandButton(String(localized: "Subir página"), "arrow.up.to.line", .scrollUp)
+                        commandButton(String(localized: "Bajar página"), "arrow.down.to.line", .scrollDown)
                     }.disabled(!remote.canUseTouchpad)
                     if remote.inputUnavailable {
                         Label(remote.feedback, systemImage: "exclamationmark.circle")
@@ -66,11 +66,11 @@ struct RemoteView: View {
                 ToolbarItem(placement: .topBarLeading) { deviceHeader }
                     .sharedBackgroundVisibility(.hidden)
                 ToolbarItemGroup(placement: .topBarTrailing) {
-                    Button("Volumen del Portal", systemImage: "speaker.wave.2") { showVolume = true }
+                    Button(String(localized: "Volumen del Portal"), systemImage: "speaker.wave.2") { showVolume = true }
                         .imageScale(.small)
                         .popover(isPresented: $showVolume) { volumeControls.presentationCompactAdaptation(.popover) }
                         .disabled(!remote.isConnected)
-                    Button("Encender o apagar pantalla", systemImage: "power") {
+                    Button(String(localized: "Encender o apagar pantalla"), systemImage: "power") {
                         guard !sendingSleep else { return }
                         sendingSleep = true
                         Task { @MainActor in
@@ -84,7 +84,7 @@ struct RemoteView: View {
                         }
                     }
                         .imageScale(.small)
-                        .accessibilityHint("Alterna la pantalla según su estado real mediante ADB")
+                        .accessibilityHint(String(localized: "Alterna la pantalla según su estado real mediante ADB"))
                         .disabled(!administration.isConnected || administration.isBusy || sendingSleep)
                 }
             }
@@ -106,7 +106,7 @@ struct RemoteView: View {
                             }
                             .buttonStyle(.plain)
                             .glassEffect(.regular.interactive(), in: .circle)
-                            .accessibilityLabel("Ocultar teclado")
+                            .accessibilityLabel(String(localized: "Ocultar teclado"))
                         }
                     }
                     .padding(.horizontal, 16).padding(.vertical, 8)
@@ -127,8 +127,8 @@ struct RemoteView: View {
                     .presentationDetents([.medium, .large], selection: $appsDetent)
                     .presentationDragIndicator(.visible)
             }
-            .alert("Mando del Portal", isPresented: Binding(get: { remote.message != nil && !remote.showConnection }, set: { if !$0 { remote.message = nil } })) {
-                Button("Aceptar", role: .cancel) { remote.message = nil }
+            .alert(String(localized: "Mando del Portal"), isPresented: Binding(get: { remote.message != nil && !remote.showConnection }, set: { if !$0 { remote.message = nil } })) {
+                Button(String(localized: "Aceptar"), role: .cancel) { remote.message = nil }
             } message: { Text(remote.message ?? "") }
         }
     }
@@ -145,9 +145,9 @@ struct RemoteView: View {
             .contentShape(.rect)
         }
         .buttonStyle(.plain)
-        .accessibilityHint("Abre la conexión del Portal")
-        .alert("Apagar pantalla", isPresented: Binding(get: { screenError != nil }, set: { if !$0 { screenError = nil } })) {
-            Button("Aceptar", role: .cancel) { screenError = nil }
+        .accessibilityHint(String(localized: "Abre la conexión del Portal"))
+        .alert(String(localized: "Apagar pantalla"), isPresented: Binding(get: { screenError != nil }, set: { if !$0 { screenError = nil } })) {
+            Button(String(localized: "Aceptar"), role: .cancel) { screenError = nil }
         } message: {
             Text(screenError ?? "")
         }
@@ -155,17 +155,17 @@ struct RemoteView: View {
 
     private var volumeControls: some View {
         VStack(spacing: 16) {
-            Text("Volumen del Portal").font(.headline)
+            Text(String(localized: "Volumen del Portal")).font(.headline)
             HStack(spacing: 20) {
                 Button { remote.enqueue(.volumeDown) } label: {
                     Image(systemName: "speaker.minus").frame(width: 44, height: 44)
-                }.accessibilityLabel("Bajar volumen")
+                }.accessibilityLabel(String(localized: "Bajar volumen"))
                 Button { remote.enqueue(.mute) } label: {
                     Image(systemName: "speaker.slash").frame(width: 44, height: 44)
-                }.accessibilityLabel("Activar o desactivar silencio")
+                }.accessibilityLabel(String(localized: "Activar o desactivar silencio"))
                 Button { remote.enqueue(.volumeUp) } label: {
                     Image(systemName: "speaker.plus").frame(width: 44, height: 44)
-                }.accessibilityLabel("Subir volumen")
+                }.accessibilityLabel(String(localized: "Subir volumen"))
             }
             .buttonStyle(.bordered)
             .buttonBorderShape(.circle)
@@ -192,11 +192,11 @@ struct RemoteView: View {
 
     private var connectionCard: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text(remote.needsPairing ? "Tu Portal, a un toque" : "Buscando tu Portal")
+            Text(remote.needsPairing ? String(localized: "Tu Portal, a un toque") : String(localized: "Buscando tu Portal"))
                 .font(.title3.weight(.semibold))
-            Text(remote.needsPairing ? "Vincúlalo una vez. Después conectaremos por ti al abrir Remio." : "Comprueba que el Portal esté encendido y en la misma Wi-Fi.")
+            Text(remote.needsPairing ? String(localized: "Vincúlalo una vez. Después conectaremos por ti al abrir Remio.") : String(localized: "Comprueba que el Portal esté encendido y en la misma Wi-Fi."))
                 .font(.subheadline).foregroundStyle(.secondary)
-            Button(remote.needsPairing ? "Conectar Portal" : "Revisar conexión") { remote.showConnection = true }
+            Button(remote.needsPairing ? String(localized: "Conectar Portal") : String(localized: "Revisar conexión")) { remote.showConnection = true }
                 .buttonStyle(.borderedProminent).tint(RemioTheme.accent).foregroundStyle(RemioTheme.background)
         }.frame(maxWidth: .infinity, alignment: .leading).padding(20)
             .background(RemioTheme.surface, in: .rect(cornerRadius: 24))
@@ -219,7 +219,7 @@ struct RemoteView: View {
                 .accessibilityHidden(true)
                 VStack(alignment: .leading, spacing: 4) {
                     Text(mediaTitle).font(.subheadline.weight(.semibold)).lineLimit(1)
-                    Text(remote.media?.active == true ? remote.media?.artist ?? "Portal" : "El audio del Portal aparecerá aquí")
+                    Text(remote.media?.active == true ? remote.media?.artist ?? "Portal" : String(localized: "El audio del Portal aparecerá aquí"))
                         .font(.caption).foregroundStyle(.secondary).lineLimit(1)
                 }
                 Spacer()
@@ -242,11 +242,11 @@ struct RemoteView: View {
                                 }
                             }
                             .disabled(!remote.isConnected)
-                            .accessibilityLabel("Posición de reproducción")
-                            .accessibilityValue("\(PortalMedia.timeLabel(position)) de \(PortalMedia.timeLabel(duration))")
+                            .accessibilityLabel(String(localized: "Posición de reproducción"))
+                            .accessibilityValue(String(localized: "\(PortalMedia.timeLabel(position)) de \(PortalMedia.timeLabel(duration))"))
                         }
                         HStack {
-                            Text(isSeeking ? "Saltar a \(PortalMedia.timeLabel(position))" : PortalMedia.timeLabel(position))
+                            Text(isSeeking ? String(localized: "Saltar a \(PortalMedia.timeLabel(position))") : PortalMedia.timeLabel(position))
                             Spacer()
                             Text(PortalMedia.timeLabel(duration))
                         }
@@ -255,15 +255,15 @@ struct RemoteView: View {
                 }
             }
             HStack {
-                mediaButton("Anterior", "backward.end.fill", .previous, needsMedia: true)
+                mediaButton(String(localized: "Anterior"), "backward.end.fill", .previous, needsMedia: true)
                 Spacer()
                 skipButton(seconds: -15)
                 Spacer()
-                mediaButton(remote.media?.playing == true ? "Pausar" : "Reproducir", remote.media?.playing == true ? "pause.fill" : "play.fill", .playPause, needsMedia: true)
+                mediaButton(remote.media?.playing == true ? String(localized: "Pausar") : String(localized: "Reproducir"), remote.media?.playing == true ? "pause.fill" : "play.fill", .playPause, needsMedia: true)
                 Spacer()
                 skipButton(seconds: 15)
                 Spacer()
-                mediaButton("Siguiente", "forward.end.fill", .next, needsMedia: true)
+                mediaButton(String(localized: "Siguiente"), "forward.end.fill", .next, needsMedia: true)
             }
         }.padding(.horizontal, 16).padding(.vertical, 10)
             .background(RemioTheme.surface, in: .rect(cornerRadius: 24))
@@ -310,7 +310,7 @@ struct RemoteView: View {
                 .font(.system(size: 24)).frame(minWidth: 44, minHeight: 44)
         }
         .buttonStyle(.plain)
-        .accessibilityLabel(seconds < 0 ? "Retroceder 15 segundos" : "Avanzar 15 segundos")
+        .accessibilityLabel(seconds < 0 ? String(localized: "Retroceder 15 segundos") : String(localized: "Avanzar 15 segundos"))
         .disabled(!remote.isConnected || remote.media?.active != true || validMediaDuration == nil || positionUnavailable || isSeeking)
     }
 
@@ -326,17 +326,17 @@ struct RemoteView: View {
     }
 
     private var mediaTitle: String {
-        guard remote.media?.active == true else { return "Sin reproducción" }
+        guard remote.media?.active == true else { return String(localized: "Sin reproducción") }
         let title = remote.media?.title ?? ""
-        return title.isEmpty ? "En reproducción" : title
+        return title.isEmpty ? String(localized: "En reproducción") : title
     }
 
     private var appsSheet: some View {
         NavigationStack {
             ScrollView {
                 if remote.apps.isEmpty {
-                    ContentUnavailableView("Sin aplicaciones", systemImage: "square.grid.2x2",
-                                           description: Text("Conecta el Portal para consultar sus aplicaciones."))
+                    ContentUnavailableView(String(localized: "Sin aplicaciones"), systemImage: "square.grid.2x2",
+                                           description: Text(String(localized: "Conecta el Portal para consultar sus aplicaciones.")))
                 } else {
                     LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 12), count: 4), alignment: .center, spacing: 20) {
                         ForEach(remote.apps) { app in
@@ -354,7 +354,7 @@ struct RemoteView: View {
                                 .contentShape(.rect)
                             }
                             .buttonStyle(.plain)
-                            .accessibilityLabel("Abrir \(app.label) en el Portal")
+                            .accessibilityLabel(String(localized: "Abrir \(app.label) en el Portal"))
                             .disabled(!remote.isConnected)
                         }
                     }
@@ -363,13 +363,13 @@ struct RemoteView: View {
             }
             .containerBackground(.clear, for: .navigation)
             .toolbarBackground(.hidden, for: .navigationBar)
-            .navigationTitle("Aplicaciones").navigationBarTitleDisplayMode(.inline)
+            .navigationTitle(String(localized: "Aplicaciones")).navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button { showApps = false } label: {
                         Image(systemName: "xmark").font(.system(size: 14, weight: .semibold))
                     }
-                    .accessibilityLabel("Cerrar aplicaciones")
+                    .accessibilityLabel(String(localized: "Cerrar aplicaciones"))
                     .tint(.primary)
                 }
             }

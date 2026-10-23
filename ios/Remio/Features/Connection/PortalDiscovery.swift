@@ -11,7 +11,7 @@ struct NearbyPortal: Identifiable, Sendable {
 @MainActor @Observable
 final class PortalDiscovery {
     private(set) var devices: [NearbyPortal] = []
-    private(set) var status = "Buscando equipos en tu Wi-Fi…"
+    private(set) var status = String(localized: "Buscando equipos en tu Wi-Fi…")
     @ObservationIgnored private var browser: NWBrowser?
     @ObservationIgnored private var connections: [String: NWConnection] = [:]
     @ObservationIgnored private var generation = UUID()
@@ -20,14 +20,14 @@ final class PortalDiscovery {
         guard browser == nil else { return }
         let generation = UUID()
         self.generation = generation
-        status = "Buscando equipos en tu Wi-Fi…"
+        status = String(localized: "Buscando equipos en tu Wi-Fi…")
         let browser = NWBrowser(for: .bonjour(type: "_immortal-remote._tcp", domain: "local."), using: .tcp)
         self.browser = browser
         browser.stateUpdateHandler = { [weak self] state in
             Task { @MainActor in
                 guard let self, self.generation == generation else { return }
-                if case .failed = state { self.status = "No se pudo buscar. Comprueba el permiso de red local." }
-                if case .waiting = state { self.status = "Comprueba la Wi-Fi y el permiso de red local de Remio." }
+                if case .failed = state { self.status = String(localized: "No se pudo buscar. Comprueba el permiso de red local.") }
+                if case .waiting = state { self.status = String(localized: "Comprueba la Wi-Fi y el permiso de red local de Remio.") }
             }
         }
         browser.browseResultsChangedHandler = { [weak self] results, _ in
@@ -70,7 +70,7 @@ final class PortalDiscovery {
                     self.devices.removeAll { $0.id == endpoint.id }
                     self.devices.append(NearbyPortal(name: name, endpoint: endpoint))
                     self.devices.sort { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
-                    self.status = "Selecciona tu Portal para vincularlo."
+                    self.status = String(localized: "Selecciona tu Portal para vincularlo.")
                 }
             }
         }

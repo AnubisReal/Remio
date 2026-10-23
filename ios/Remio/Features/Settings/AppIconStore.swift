@@ -24,7 +24,7 @@ final class AppIconStore {
     func select(_ icon: RemioIcon) async {
         guard !isChanging, icon != selected else { return }
         guard UIApplication.shared.supportsAlternateIcons else {
-            errorMessage = "Este dispositivo no permite cambiar el icono."
+            errorMessage = String(localized: "Este dispositivo no permite cambiar el icono.")
             return
         }
         isChanging = true
@@ -33,7 +33,7 @@ final class AppIconStore {
             try await UIApplication.shared.setAlternateIconName(icon.alternateName)
             refreshSelection()
         } catch {
-            errorMessage = "No se pudo cambiar el icono. Inténtalo de nuevo."
+            errorMessage = String(localized: "No se pudo cambiar el icono. Inténtalo de nuevo.")
         }
     }
 }

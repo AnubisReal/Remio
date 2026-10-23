@@ -39,21 +39,21 @@ struct ConnectionView: View {
                     if discovery.devices.isEmpty {
                         Text(discovery.status).font(.footnote).foregroundStyle(.secondary)
                     }
-                    TextField("Dirección IP", text: $address)
+                    TextField(String(localized: "Dirección IP"), text: $address)
                         .focused($focusedField, equals: .address)
                         .keyboardType(.URL).textInputAutocapitalization(.never).autocorrectionDisabled()
                         .disabled(remote.isPairing || administration.isChecking)
                 }
-                Section("Mando") {
-                    LabeledContent("Puerto") {
+                Section(String(localized: "Mando")) {
+                    LabeledContent(String(localized: "Puerto")) {
                         TextField("8723", text: $remotePort)
                             .focused($focusedField, equals: .remotePort)
                             .keyboardType(.numberPad).multilineTextAlignment(.trailing)
                             .disabled(remote.isPairing || administration.isChecking)
                     }
-                    LabeledContent("Conexión", value: selectedEndpoint == remote.endpoint ? remote.status : "Sin vincular")
+                    LabeledContent(String(localized: "Conexión"), value: selectedEndpoint == remote.endpoint ? remote.status : String(localized: "Sin vincular"))
                     if showPairing || remote.needsPairing || selectedEndpoint != remote.endpoint {
-                        SecureField("PIN de seis cifras", text: $pin)
+                        SecureField(String(localized: "PIN de seis cifras"), text: $pin)
                             .keyboardType(.numberPad).textContentType(.oneTimeCode)
                             .focused($focusedField, equals: .pin).disabled(remote.isPairing)
                             .onChange(of: pin) { _, value in pin = String(value.filter { $0.isASCII && $0.isNumber }.prefix(6)) }
@@ -67,25 +67,25 @@ struct ConnectionView: View {
                                 await remote.refresh()
                             }
                         } label: {
-                            HStack { Text("Vincular mando"); Spacer(); if remote.isPairing { ProgressView() } }
+                            HStack { Text(String(localized: "Vincular mando")); Spacer(); if remote.isPairing { ProgressView() } }
                         }
                         .disabled(pin.count != 6 || remote.isPairing || selectedEndpoint == nil)
                     } else {
                         if !remote.isConnected {
-                            Button("Reconectar mando") { Task { await remote.refresh() } }
+                            Button(String(localized: "Reconectar mando")) { Task { await remote.refresh() } }
                         }
-                        Button("Volver a vincular") { showPairing = true; focusedField = .pin }
+                        Button(String(localized: "Volver a vincular")) { showPairing = true; focusedField = .pin }
                     }
                 }
                 Section {
-                    LabeledContent("Puerto") {
+                    LabeledContent(String(localized: "Puerto")) {
                         TextField("5555", text: $adbPort)
                             .focused($focusedField, equals: .adbPort)
                             .keyboardType(.numberPad).multilineTextAlignment(.trailing)
                             .disabled(administration.isChecking)
                     }
                     if let endpoint = selectedEndpoint {
-                        LabeledContent("Dirección", value: "\(endpoint.host):\(adbPort)")
+                        LabeledContent(String(localized: "Dirección"), value: "\(endpoint.host):\(adbPort)")
                             .font(.subheadline)
                     }
                     if administration.checkedAddress == selectedEndpoint.map({ "\($0.host):\(adbPort)" }) {
@@ -95,9 +95,9 @@ struct ConnectionView: View {
                         guard let endpoint = selectedEndpoint else { return }
                         administration.check(host: endpoint.host, port: adbPort)
                     } label: {
-                        HStack { Text(administration.isConnected ? "Reconectar ADB" : "Conectar ADB"); Spacer(); if administration.isChecking { ProgressView() } }
+                        HStack { Text(administration.isConnected ? String(localized: "Reconectar ADB") : String(localized: "Conectar ADB")); Spacer(); if administration.isChecking { ProgressView() } }
                     }.disabled(selectedEndpoint == nil || administration.isChecking || remote.isPairing)
-                } header: { Text("Administración · ADB") } footer: { Text("Acepta la autorización de Remio en el Portal la primera vez.") }
+                } header: { Text(String(localized: "Administración · ADB")) } footer: { Text(String(localized: "Acepta la autorización de Remio en el Portal la primera vez.")) }
                 if let message = remote.message {
                     Section { Text(message).font(.footnote).foregroundStyle(.secondary) }
                 }
@@ -106,10 +106,10 @@ struct ConnectionView: View {
             .onTapGesture { focusedField = nil }
             .tint(RemioTheme.accent)
             .toolbarBackground(.hidden, for: .navigationBar)
-            .navigationTitle("Conectar Portal").navigationBarTitleDisplayMode(.inline)
+            .navigationTitle(String(localized: "Conectar Portal")).navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button("Cerrar", systemImage: "xmark") { dismiss() }.disabled(remote.isPairing)
+                    Button(String(localized: "Cerrar"), systemImage: "xmark") { dismiss() }.disabled(remote.isPairing)
                 }
             }
             .interactiveDismissDisabled(remote.isPairing)

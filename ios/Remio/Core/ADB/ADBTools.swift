@@ -4,11 +4,11 @@ enum ADBToolError: Error, LocalizedError {
     case disconnected, busy, invalidData, refused(String), tooLarge
     var errorDescription: String? {
         switch self {
-        case .disconnected: "ADB no está conectado."
-        case .busy: "Espera a que termine la operación actual."
-        case .invalidData: "El Portal devolvió datos que no se pueden validar."
+        case .disconnected: String(localized: "ADB no está conectado.")
+        case .busy: String(localized: "Espera a que termine la operación actual.")
+        case .invalidData: String(localized: "El Portal devolvió datos que no se pueden validar.")
         case .refused(let reason): reason
-        case .tooLarge: "El archivo supera el límite de 256 MB por transferencia."
+        case .tooLarge: String(localized: "El archivo supera el límite de 256 MB por transferencia.")
         }
     }
 }
@@ -20,11 +20,11 @@ enum ADBTools {
         let prefix = "Display Power: state="
         let states = text.split(whereSeparator: \.isNewline).map { $0.trimmingCharacters(in: .whitespaces) }
             .filter { $0.hasPrefix(prefix) }.map { String($0.dropFirst(prefix.count)) }
-        guard states.count == 1 else { throw ADBToolError.refused("No se pudo determinar el estado de la pantalla del Portal.") }
+        guard states.count == 1 else { throw ADBToolError.refused(String(localized: "No se pudo determinar el estado de la pantalla del Portal.")) }
         switch states[0] {
         case "ON", "VR": return 223
         case "OFF", "DOZE", "DOZE_SUSPEND", "ON_SUSPEND": return 224
-        default: throw ADBToolError.refused("El Portal devolvió un estado de pantalla desconocido.")
+        default: throw ADBToolError.refused(String(localized: "El Portal devolvió un estado de pantalla desconocido."))
         }
     }
 
@@ -66,6 +66,57 @@ struct ToolkitHistory: Identifiable, Codable {
     let date: Date
     let action: String
     let success: Bool
+    var activity: ToolkitActivity? = nil
+    var displayTitle: String { (activity ?? ToolkitActivity(legacy: action))?.title ?? action }
+}
+
+/// Persist stable operation IDs; localize descriptions only when presenting them.
+enum ToolkitActivity: Codable, Equatable {
+    case verify, uploadFiles, installAPK, uninstall(String), uploadPhotos, changeUpdates
+    case appDetails, applications, device, updates, installBatch(String)
+    case backupApps, createBackup, validateBackup, restoreBackup
+
+    var title: String {
+        switch self {
+        case .verify: String(localized: "Consultar dispositivo")
+        case .uploadFiles: String(localized: "Enviar imágenes desde Archivos")
+        case .installAPK: String(localized: "Instalar APK")
+        case .uninstall(let package): String(localized: "Desinstalar \(package)")
+        case .uploadPhotos: String(localized: "Enviar fotos")
+        case .changeUpdates: String(localized: "Cambiar actualizaciones del sistema")
+        case .appDetails: String(localized: "Consultar app")
+        case .applications: String(localized: "Consultar aplicaciones")
+        case .device: String(localized: "Consultar dispositivo")
+        case .updates: String(localized: "Consultar actualizaciones")
+        case .installBatch(let name): String(localized: "Instalar lote \(name)")
+        case .backupApps: String(localized: "Consultar apps para copia")
+        case .createBackup: String(localized: "Crear copia de seguridad")
+        case .validateBackup: String(localized: "Validar copia ZIP")
+        case .restoreBackup: String(localized: "Restaurar copia de seguridad")
+        }
+    }
+
+    init?(legacy: String) {
+        switch legacy {
+        case "Verificar consultas ADB": self = .verify
+        case "Enviar imágenes desde Archivos": self = .uploadFiles
+        case "Instalar APK": self = .installAPK
+        case "Enviar fotos": self = .uploadPhotos
+        case "Cambiar actualizaciones del sistema": self = .changeUpdates
+        case "Consultar app": self = .appDetails
+        case "Consultar aplicaciones": self = .applications
+        case "Consultar dispositivo": self = .device
+        case "Consultar actualizaciones": self = .updates
+        case "Consultar apps para copia": self = .backupApps
+        case "Crear copia de seguridad": self = .createBackup
+        case "Validar copia ZIP": self = .validateBackup
+        case "Restaurar copia de seguridad": self = .restoreBackup
+        default:
+            if legacy.hasPrefix("Desinstalar ") { self = .uninstall(String(legacy.dropFirst("Desinstalar ".count))) }
+            else if legacy.hasPrefix("Instalar lote ") { self = .installBatch(String(legacy.dropFirst("Instalar lote ".count))) }
+            else { return nil }
+        }
+    }
 }
 
 /// Incremental parser: a large pull never reparses all previous chunks.

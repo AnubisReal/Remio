@@ -11,7 +11,7 @@ struct NativeRemoteKeyboard: UIViewRepresentable {
 
     func makeUIView(context: Context) -> RemoteTextField {
         let field = RemoteTextField()
-        field.placeholder = "Escribe en el Portal"
+        field.placeholder = String(localized: "Escribe en el Portal")
         field.borderStyle = .none
         field.font = .preferredFont(forTextStyle: .body)
         field.adjustsFontForContentSizeCategory = true
@@ -22,7 +22,7 @@ struct NativeRemoteKeyboard: UIViewRepresentable {
         field.smartDashesType = .no
         field.smartInsertDeleteType = .no
         field.returnKeyType = .done
-        field.accessibilityLabel = "Teclado del Portal, escritura en directo"
+        field.accessibilityLabel = String(localized: "Teclado del Portal, escritura en directo")
         field.accessibilityIdentifier = "portal-keyboard-input"
         field.delegate = context.coordinator
         field.addTarget(context.coordinator, action: #selector(Coordinator.changed(_:)), for: .editingChanged)

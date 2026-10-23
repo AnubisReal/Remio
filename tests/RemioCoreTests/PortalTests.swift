@@ -590,3 +590,19 @@ func acceptsPrivateAddresses(_ address: String) throws {
         #expect(throws: (any Error).self) { try ADBTools.screenToggleKey(from: Data(response.utf8)) }
     }
 }
+
+
+@Test func toolkitHistoryKeepsStableActionsAndReadsLegacyEntries() throws {
+    let activity = ToolkitActivity.installBatch("Mis APK")
+    let entry = ToolkitHistory(id: UUID(), date: .now, action: "Previous label", success: true, activity: activity)
+    let decoded = try JSONDecoder().decode(ToolkitHistory.self, from: JSONEncoder().encode(entry))
+    #expect(decoded.activity == activity)
+    #expect(ToolkitActivity(legacy: "Instalar lote Mis APK") == activity)
+    #expect(ToolkitActivity(legacy: "Desinstalar com.example.app") == .uninstall("com.example.app"))
+    #expect(ToolkitActivity(legacy: "Custom event") == nil)
+    var legacy = try #require(JSONSerialization.jsonObject(with: JSONEncoder().encode(entry)) as? [String: Any])
+    legacy.removeValue(forKey: "activity")
+    let old = try JSONDecoder().decode(ToolkitHistory.self, from: JSONSerialization.data(withJSONObject: legacy))
+    #expect(old.activity == nil)
+    #expect(old.displayTitle == "Previous label")
+}
