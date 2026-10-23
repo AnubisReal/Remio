@@ -30,4 +30,6 @@ La fuente muestra el icono y las versiones disponibles, y se actualiza al public
 
 Creado por [AnubisReal](https://github.com/AnubisReal) · [Instagram](https://www.instagram.com/anubisreal/) · [X](https://x.com/Anubisreal23).
 
-Referencia funcional: [Portal Toolkit](https://github.com/jurax-sys/portal-toolkit). Proyecto independiente, sin afiliación con Meta.
+Gracias a [jurax-sys](https://github.com/jurax-sys) por [Portal Toolkit](https://github.com/jurax-sys/portal-toolkit), que nos ha servido de referencia para algunas de las herramientas de Remio. ¡Un saludo y gracias por compartir el proyecto con la comunidad!
+
+Remio es un proyecto independiente, sin afiliación con Meta.
