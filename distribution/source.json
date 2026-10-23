@@ -4,6 +4,35 @@
   "subtitle": "Control nativo para tu Portal",
   "website": "https://github.com/AnubisReal/Remio",
   "tintColor": "D4D4D4",
-  "apps": [],
-  "news": []
+  "apps": [
+    {
+      "name": "Remio",
+      "bundleIdentifier": "com.remio.app",
+      "developerName": "AnubisReal",
+      "subtitle": "Mando y herramientas para Portal",
+      "localizedDescription": "Controla tu Portal con trackpad, teclado nativo, aplicaciones y reproducción. Gestiona APK, fotos y copias mediante ADB. Requiere iOS 26 y un Portal compatible en la misma red.",
+      "iconURL": "https://raw.githubusercontent.com/AnubisReal/Remio/main/design/identity/pulse/app-icon.png",
+      "tintColor": "D4D4D4",
+      "category": "utilities",
+      "versions": [
+        {
+          "version": "0.1.0",
+          "buildVersion": "1",
+          "date": "2026-10-23T04:40:06Z",
+          "localizedDescription": "# Remio 0.1.0\n\nPrimera versión de prueba para iOS/iPadOS 26.\n\n- Mando con trackpad, navegación, teclado nativo y selección de aplicaciones.\n- Reproducción con carátula, progreso y saltos de 15 segundos, según los datos que facilite el Portal.\n- Conexión ADB independiente, reconexión y gestión de aplicaciones.\n- Instalación de APK, lotes, fotos desde Fototeca o Archivos, copias e información del Portal.\n- Iconos Pulse/Signal, perfiles sociales y mando direccional opcional.\n\n## Antes de publicar\n\nCompilación y pruebas automatizadas comprobadas; instalación por AltStore/SideStore y ejecución dentro de LiveContainer pendientes de probar en hardware. Las funciones de escritura de Herramientas requieren pruebas controladas con archivos seleccionados por el propietario.\n\nEl IPA está preparado para que el instalador lo firme. No contiene un certificado de distribución. La vinculación inicial del mando y la autorización ADB deben aceptarse en el Portal. No se modifica ni se instala Immortal.\n\n",
+          "downloadURL": "https://github.com/AnubisReal/Remio/releases/download/v0.1.0/Remio.ipa",
+          "size": 1374081,
+          "minOSVersion": "26.0"
+        }
+      ],
+      "appPermissions": {
+        "entitlements": [],
+        "privacy": {
+          "NSLocalNetworkUsageDescription": "Remio busca tu Portal y se conecta a su mando y a ADB en tu Wi-Fi."
+        }
+      }
+    }
+  ],
+  "news": [],
+  "iconURL": "https://raw.githubusercontent.com/AnubisReal/Remio/main/design/identity/pulse/app-icon.png"
 }
