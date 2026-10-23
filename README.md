@@ -6,13 +6,15 @@
 
 Remio es un mando nativo para iPhone y iPad: mueve el cursor, escribe con el teclado de iOS, abre aplicaciones y controla la reproducción de tu Portal. Incluye herramientas ADB para gestionar APK, enviar fotos y crear copias.
 
+Disponible en **español e inglés**, seleccionados automáticamente según el idioma del dispositivo.
+
 **Requisitos:** iOS/iPadOS 26 y un Portal con [Immortal](https://github.com/starbrightlab/immortal), en la misma Wi-Fi. Las herramientas requieren ADB habilitado y autorizado.
 
 ### Descargar
 
 [**Descargar IPA →**](https://github.com/AnubisReal/Remio/releases)
 
-Disponible **Remio 0.1.1** para carga lateral. La validación en hardware con cada gestor sigue pendiente.
+Disponible **Remio 0.1.2** para carga lateral. La validación en hardware con cada gestor sigue pendiente.
 
 ### Fuente
 
