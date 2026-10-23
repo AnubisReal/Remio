@@ -24,7 +24,8 @@ jobs:
           TAG: ${{ github.event.release.tag_name }}
         run: |
           mkdir -p dist
-          gh release download "$TAG" --pattern Remio.ipa --dir dist
+          gh release download "$TAG" --pattern Remio.ipa --pattern Remio.ipa.sha256 --dir dist
+          (cd dist && shasum -a 256 -c Remio.ipa.sha256)
           gh release view "$TAG" --json body --jq .body > dist/notes.md
       - name: Update source from the published binary
         env:
