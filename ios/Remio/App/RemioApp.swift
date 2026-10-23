@@ -32,6 +32,8 @@ struct RemioApp: App {
                 if phase == .background { administration.cancel() }
             }
             .sheet(isPresented: $remote.showConnection) { ConnectionView().environment(remote).environment(administration) }
+            .scrollIndicators(.hidden)
+            .scrollEdgeEffectHidden(true, for: .top)
             #if DEBUG && targetEnvironment(simulator)
             .task {
                 if ProcessInfo.processInfo.environment["REMIO_TOOLS_PREVIEW"] == "1" { selectedTab = 1 }

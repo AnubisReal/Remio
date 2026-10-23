@@ -106,6 +106,7 @@ struct SettingsView: View {
             }
             .scrollContentBackground(.hidden)
             .background(RemioTheme.background)
+            .toolbarBackground(.hidden, for: .navigationBar)
             .navigationTitle("Ajustes")
             .confirmationDialog("¿Olvidar la vinculación del mando?", isPresented: $confirmForget, titleVisibility: .visible) {
                 Button("Olvidar en este iPhone", role: .destructive) { remote.forget() }

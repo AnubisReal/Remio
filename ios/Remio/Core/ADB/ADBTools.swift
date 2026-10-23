@@ -14,6 +14,20 @@ enum ADBToolError: Error, LocalizedError {
 }
 
 enum ADBTools {
+    /// Use display power, not wakefulness: Portal can be Dozing with the display OFF.
+    static func screenToggleKey(from data: Data) throws -> Int {
+        guard data.count <= 1024 * 1024, let text = String(data: data, encoding: .utf8) else { throw ADBToolError.invalidData }
+        let prefix = "Display Power: state="
+        let states = text.split(whereSeparator: \.isNewline).map { $0.trimmingCharacters(in: .whitespaces) }
+            .filter { $0.hasPrefix(prefix) }.map { String($0.dropFirst(prefix.count)) }
+        guard states.count == 1 else { throw ADBToolError.refused("No se pudo determinar el estado de la pantalla del Portal.") }
+        switch states[0] {
+        case "ON", "VR": return 223
+        case "OFF", "DOZE", "DOZE_SUSPEND", "ON_SUSPEND": return 224
+        default: throw ADBToolError.refused("El Portal devolvió un estado de pantalla desconocido.")
+        }
+    }
+
     static let limit = 256 * 1024 * 1024
     static let updates = ["com.facebook.aloha.alohaotasetup", "com.facebook.aloha.otaui"]
     static func package(_ value: String) throws -> String {

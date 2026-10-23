@@ -1,15 +1,10 @@
-# Remio 0.1.0
+# Remio 0.1.1
 
-Primera versión de prueba para iOS/iPadOS 26.
+- El botón de encendido consulta el estado real del Portal y apaga o despierta la pantalla mediante ADB. El reposo se ha probado en Portal+; la alternancia desde Remio queda lista para probar.
+- Conexión más sencilla: introduce la IP y utiliza los puertos predeterminados 8723 para el mando y 5555 para ADB, ambos editables.
+- El teclado del formulario de conexión se puede ocultar al tocar fuera de los campos o al desplazar el formulario.
+- Trackpad sin resaltado del borde durante el movimiento.
+- Indicadores laterales de desplazamiento ocultos en todas las pantallas.
+- Eliminado el efecto del borde superior del scroll y el fondo de la barra de navegación, conservando los controles nativos.
 
-- Mando con trackpad, navegación, teclado nativo y selección de aplicaciones.
-- Reproducción con carátula, progreso y saltos de 15 segundos, según los datos que facilite el Portal.
-- Conexión ADB independiente, reconexión y gestión de aplicaciones.
-- Instalación de APK, lotes, fotos desde Fototeca o Archivos, copias e información del Portal.
-- Iconos Pulse/Signal, perfiles sociales y mando direccional opcional.
-
-## Antes de publicar
-
-Compilación y pruebas automatizadas comprobadas; instalación por AltStore/SideStore y ejecución dentro de LiveContainer pendientes de probar en hardware. Las funciones de escritura de Herramientas requieren pruebas controladas con archivos seleccionados por el propietario.
-
-El IPA está preparado para que el instalador lo firme. No contiene un certificado de distribución. La vinculación inicial del mando y la autorización ADB deben aceptarse en el Portal. No se modifica ni se instala Immortal.
+Requiere iOS/iPadOS 26 o posterior. IPA para carga lateral con AltStore Classic, SideStore o LiveContainer. La instalación y los ajustes visuales deben comprobarse en el dispositivo real, especialmente dentro de LiveContainer. Las autorizaciones iniciales del mando y de ADB siguen siendo necesarias.

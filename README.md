@@ -12,7 +12,7 @@ Remio es un mando nativo para iPhone y iPad: mueve el cursor, escribe con el tec
 
 [**Descargar IPA →**](https://github.com/AnubisReal/Remio/releases)
 
-Disponible **Remio 0.1.0** para carga lateral. La validación en hardware con cada gestor sigue pendiente.
+Disponible **Remio 0.1.1** para carga lateral. La validación en hardware con cada gestor sigue pendiente.
 
 ### Fuente
 

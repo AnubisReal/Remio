@@ -77,6 +77,7 @@ private struct ToolkitView: View {
                 .padding(.horizontal, 20).padding(.top, 12).padding(.bottom, 24)
             }
             .background(RemioTheme.background)
+            .toolbarBackground(.hidden, for: .navigationBar)
             .navigationTitle("Herramientas")
             .navigationDestination(for: ToolPage.self) { page in
                 ToolDetail(page: page, tools: tools)
@@ -187,6 +188,7 @@ private struct ToolDetail: View {
                 BackupToolsView(tools: tools)
             }
         }
+        .toolbarBackground(.hidden, for: .navigationBar)
         .navigationTitle(page.rawValue).navigationBarTitleDisplayMode(.inline)
         .task(id: tools.adb.isConnected) {
             // Let the native push animation finish before publishing loading state.
@@ -289,6 +291,7 @@ private struct ToolDetail: View {
                         }.disabled(!ready)
                     }
                 }
+                .toolbarBackground(.hidden, for: .navigationBar)
                 .navigationTitle(appName(app)).navigationBarTitleDisplayMode(.inline)
                 .toolbar { ToolbarItem(placement: .topBarTrailing) { Button("Cerrar", systemImage: "xmark") { selectedPackage = nil } } }
             }.presentationDetents([.medium, .large])

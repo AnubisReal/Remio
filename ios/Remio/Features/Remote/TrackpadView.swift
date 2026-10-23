@@ -11,7 +11,7 @@ struct TrackpadView: View {
         ZStack {
             RoundedRectangle(cornerRadius: 34).fill(RemioTheme.surface)
             RoundedRectangle(cornerRadius: 34)
-                .strokeBorder(RemioTheme.accent.opacity(isDragging ? 0.5 : 0.12), lineWidth: 1)
+                .strokeBorder(RemioTheme.accent.opacity(0.12), lineWidth: 1)
         }
         .aspectRatio(0.85, contentMode: .fit)
         .contentShape(.rect(cornerRadius: 34))

@@ -580,3 +580,13 @@ func acceptsPrivateAddresses(_ address: String) throws {
     let ack = ADBHandshake.packet(command: ADBHandshake.okay, arg0: 93, arg1: 41, payload: Data())
     #expect(try ADBHandshake.response(ack).length == 0)
 }
+
+
+@Test func screenToggleUsesActualDisplayPower() throws {
+    #expect(try ADBTools.screenToggleKey(from: Data("mWakefulness=Dozing\nDisplay Power: state=OFF\n".utf8)) == 224)
+    #expect(try ADBTools.screenToggleKey(from: Data("  Display Power: state=ON\r\n".utf8)) == 223)
+    #expect(try ADBTools.screenToggleKey(from: Data("Display Power: state=DOZE".utf8)) == 224)
+    for response in ["mWakefulness=Awake", "Display Power: state=UNKNOWN", "Display Power: state=OFF\nDisplay Power: state=ON"] {
+        #expect(throws: (any Error).self) { try ADBTools.screenToggleKey(from: Data(response.utf8)) }
+    }
+}

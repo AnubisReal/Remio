@@ -5,6 +5,7 @@ import CoreText
 struct RemoteView: View {
     @Environment(RemoteModel.self) private var remote
     @Environment(AppIconStore.self) private var icons
+    @Environment(AdministrationModel.self) private var administration
     @ScaledMetric(relativeTo: .headline) private var headerHeight = 30
     @Environment(\.scenePhase) private var scenePhase
     @State private var isDragging = false
@@ -12,7 +13,8 @@ struct RemoteView: View {
     @State private var showApps = false
     @State private var appsDetent: PresentationDetent = .medium
     @State private var showVolume = false
-    @State private var showScreenUnavailable = false
+    @State private var screenError: String?
+    @State private var sendingSleep = false
     @State private var seekPosition = 0.0
     @State private var isSeeking = false
     @State private var mediaSampledAt = Date()
@@ -57,6 +59,7 @@ struct RemoteView: View {
             #if DEBUG && targetEnvironment(simulator)
             .defaultScrollAnchor(ProcessInfo.processInfo.environment["REMIO_MEDIA_PREVIEW"] == "1" ? .bottom : .top)
             #endif
+            .toolbarBackground(.hidden, for: .navigationBar)
             .scrollDisabled(isDragging)
             .background(RemioTheme.background)
             .toolbar {
@@ -67,10 +70,22 @@ struct RemoteView: View {
                         .imageScale(.small)
                         .popover(isPresented: $showVolume) { volumeControls.presentationCompactAdaptation(.popover) }
                         .disabled(!remote.isConnected)
-                    Button("Apagar pantalla", systemImage: "power") { showScreenUnavailable = true }
+                    Button("Encender o apagar pantalla", systemImage: "power") {
+                        guard !sendingSleep else { return }
+                        sendingSleep = true
+                        Task { @MainActor in
+                            defer { sendingSleep = false }
+                            do {
+                                let state = try await administration.service("shell:dumpsys power")
+                                let key = try ADBTools.screenToggleKey(from: state)
+                                _ = try await administration.service("shell:input keyevent \(key)")
+                            }
+                            catch { screenError = error.localizedDescription }
+                        }
+                    }
                         .imageScale(.small)
-                        .accessibilityHint("Todavía no disponible con la conexión actual")
-                        .disabled(!remote.isConnected)
+                        .accessibilityHint("Alterna la pantalla según su estado real mediante ADB")
+                        .disabled(!administration.isConnected || administration.isBusy || sendingSleep)
                 }
             }
             .toolbar(showKeyboard ? .hidden : .visible, for: .tabBar)
@@ -131,10 +146,10 @@ struct RemoteView: View {
         }
         .buttonStyle(.plain)
         .accessibilityHint("Abre la conexión del Portal")
-        .alert("Apagar pantalla", isPresented: $showScreenUnavailable) {
-            Button("Aceptar", role: .cancel) { }
+        .alert("Apagar pantalla", isPresented: Binding(get: { screenError != nil }, set: { if !$0 { screenError = nil } })) {
+            Button("Aceptar", role: .cancel) { screenError = nil }
         } message: {
-            Text("La conexión remota actual no permite apagar solo la pantalla. Este botón estará disponible cuando el servicio del Portal admita esa función.")
+            Text(screenError ?? "")
         }
     }
 
@@ -347,6 +362,7 @@ struct RemoteView: View {
                 }
             }
             .containerBackground(.clear, for: .navigation)
+            .toolbarBackground(.hidden, for: .navigationBar)
             .navigationTitle("Aplicaciones").navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
