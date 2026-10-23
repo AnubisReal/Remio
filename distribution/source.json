@@ -16,6 +16,15 @@
       "category": "utilities",
       "versions": [
         {
+          "version": "0.1.2",
+          "buildVersion": "3",
+          "date": "2026-10-23T19:09:07Z",
+          "localizedDescription": "# Remio 0.1.2\n\n- Interfaz en español e inglés, seleccionados automáticamente según las preferencias de idioma del dispositivo.\n- Traducidos botones, pantallas, estados de conexión, mensajes de error, progreso y accesibilidad.\n- Aviso del permiso de red local disponible en ambos idiomas.\n- Plurales adaptados al idioma e historial de operaciones con títulos localizados.\n- Catálogos nativos de Xcode para mantener y ampliar las traducciones.\n\nComprobadas ambas localizaciones en el simulador y en el IPA Release. 56 pruebas automatizadas aprobadas. Requiere iOS/iPadOS 26 o posterior. El IPA debe firmarse mediante el gestor de carga lateral; el funcionamiento dentro de LiveContainer depende también de sus permisos y configuración.\n\n",
+          "downloadURL": "https://github.com/AnubisReal/Remio/releases/download/v0.1.2/Remio.ipa",
+          "size": 1421072,
+          "minOSVersion": "26.0"
+        },
+        {
           "version": "0.1.1",
           "buildVersion": "2",
           "date": "2026-10-23T05:14:52Z",
