@@ -14,3 +14,5 @@ Los SVG son reconstrucciones geométricas limpias de los conceptos, no imágenes
 `concepts/` conserva las tres láminas iniciales con sus nombres originales. No usar esas láminas como iconos finales.
 
 `scripts/export_identity.py` contiene la geometría fuente y regenera SVG, PNG supersampleados y recursos de Xcode. Requiere Python 3 y Pillow. Cambiar la geometría allí y regenerar para mantener sincronizados los recursos. Los SVG también son editables en herramientas vectoriales; trasladar sus cambios al exportador antes de volver a ejecutarlo.
+
+El banner del repositorio está en `banner.svg`, con tipografía convertida a trazados, y `banner.png` a doble resolución. Se regenera desde la raíz con `swift scripts/export_banner.swift` (macOS).
