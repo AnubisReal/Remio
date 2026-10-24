@@ -28,6 +28,11 @@ struct BackupToolsView: View {
             Button(String(localized: "Cargar apps del Portal"), systemImage: "arrow.clockwise") {
                 tools.perform(.backupApps) { try await tools.refreshPackages() }
             }.disabled(!ready)
+            HStack {
+                Button(String(localized: "Seleccionar todas")) { selected = Set(tools.packages.map(\.packageName)) }
+                Spacer()
+                Button(String(localized: "Ninguna")) { selected.removeAll() }
+            }.disabled(tools.busy)
             ForEach(tools.packages) { app in
                 Button {
                     if selected.contains(app.packageName) { selected.remove(app.packageName) } else { selected.insert(app.packageName) }
@@ -45,7 +50,8 @@ struct BackupToolsView: View {
                     document = PortalBackupDocument(data: try await tools.createBackup(packages: packages))
                     export = true
                 }
-            }.disabled(!ready || selected.isEmpty)
+            }.disabled(!ready)
+            if selected.isEmpty { Text(String(localized: "Se creará una copia solo de ajustes.")).font(.footnote).foregroundStyle(.secondary) }
         } header: { Text(String(localized: "Nueva copia")) } footer: {
             Text(String(localized: "Incluye APK y ajustes seleccionados del sistema. No incluye datos privados de las apps, fotos ni sesiones."))
         }
@@ -53,10 +59,13 @@ struct BackupToolsView: View {
             Button(String(localized: "Abrir copia ZIP"), systemImage: "doc.zipper") { importing = true }.disabled(tools.busy)
             if let preview {
                 LabeledContent(String(localized: "Modelo"), value: preview.device.model)
+                LabeledContent(String(localized: "Creada"), value: Date(timeIntervalSince1970: Double(preview.createdAt) / 1000).formatted(date: .abbreviated, time: .shortened))
+                LabeledContent("SDK", value: preview.device.sdk)
                 LabeledContent(String(localized: "Aplicaciones"), value: String(preview.apps.count))
                 LabeledContent(String(localized: "Ajustes"), value: String(preview.settings.count))
                 Toggle(String(localized: "Restaurar también ajustes"), isOn: $restoreSettings)
-                Button(String(localized: "Restaurar copia"), role: .destructive) { confirmRestore = true }.disabled(!ready)
+                Button(String(localized: "Restaurar copia"), role: .destructive) { confirmRestore = true }
+                    .disabled(!ready || (preview.apps.isEmpty && !restoreSettings))
             }
         } header: { Text(String(localized: "Restaurar")) }
         .fileExporter(isPresented: $export, document: document, contentType: .zip,
@@ -72,8 +81,10 @@ struct BackupToolsView: View {
                 guard (try url.resourceValues(forKeys: [.fileSizeKey]).fileSize ?? 0) <= ToolkitArchive.maxBytes else { throw ADBToolError.tooLarge }
                 let data = try Data(contentsOf: url)
                 tools.perform(.validateBackup, requiresPortal: false) {
-                    let decoded = try await Task.detached { try ToolkitArchive.decode(data) }.value
-                    let manifest = try ToolkitBackup.inspect(decoded)
+                    let (decoded, manifest) = try await Task.detached {
+                        let decoded = try ToolkitArchive.decode(data)
+                        return (decoded, try ToolkitBackup.inspect(decoded))
+                    }.value
                     entries = decoded; preview = manifest; restoreSettings = false
                 }
             } catch { tools.error = error.localizedDescription }
@@ -85,6 +96,7 @@ struct BackupToolsView: View {
                 tools.perform(.restoreBackup) { try await tools.restoreBackup(entries, settings: settings) }
             }
         } message: {
+            Text(String(localized: "Las apps incompatibles pueden fallar. La restauración se detiene tras tres fallos consecutivos. Si alguna app falla, no se aplican los ajustes."))
             Text(restoreSettings ? String(localized: "Instalará las apps y modificará los ajustes incluidos. Debe coincidir el modelo y la versión de Android.") : String(localized: "Instalará las apps de la copia. No restaurará ajustes del sistema."))
         }
     }

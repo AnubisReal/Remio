@@ -5,6 +5,7 @@ struct ConnectionView: View {
     @Environment(AdministrationModel.self) private var administration
     @Environment(\.dismiss) private var dismiss
     @State private var discovery = PortalDiscovery()
+    @State private var adbDiscovery = ADBDiscovery()
     @State private var address = ""
     @State private var pin = ""
     @State private var showPairing = false
@@ -98,6 +99,28 @@ struct ConnectionView: View {
                         HStack { Text(administration.isConnected ? String(localized: "Reconectar ADB") : String(localized: "Conectar ADB")); Spacer(); if administration.isChecking { ProgressView() } }
                     }.disabled(selectedEndpoint == nil || administration.isChecking || remote.isPairing)
                 } header: { Text(String(localized: "Administración · ADB")) } footer: { Text(String(localized: "Acepta la autorización de Remio en el Portal la primera vez.")) }
+                Section {
+                    Button {
+                        focusedField = nil
+                        adbDiscovery.start(port: Int(adbPort) ?? 0, excluding: administration.isConnected ? administration.savedEndpoint : nil)
+                    } label: { Label(String(localized: "Buscar servicios ADB"), systemImage: "wifi") }
+                        .disabled(adbDiscovery.running || administration.isChecking || administration.isBusy || remote.isPairing)
+                    if adbDiscovery.running {
+                        ProgressView(value: Double(adbDiscovery.completed), total: Double(max(1, adbDiscovery.total)))
+                        Button(String(localized: "Cancelar"), role: .cancel) { adbDiscovery.stop() }
+                    }
+                    ForEach(adbDiscovery.hosts, id: \.self) { host in
+                        Button {
+                            address = host
+                            administration.check(host: host, port: adbPort)
+                        } label: {
+                            HStack { Text(host); Spacer(); Image(systemName: "chevron.right").font(.caption) }
+                        }.disabled(adbDiscovery.running || administration.isChecking || administration.isBusy || remote.isPairing)
+                    }
+                    if let message = adbDiscovery.message { Text(message).font(.footnote).foregroundStyle(.secondary) }
+                } header: { Text(String(localized: "Búsqueda ADB")) } footer: {
+                    Text(String(localized: "Busca hasta 253 direcciones de tu segmento Wi-Fi. Los resultados son servicios ADB sin identificar; selecciona uno para autorizar y comprobar el equipo."))
+                }
                 if let message = remote.message {
                     Section { Text(message).font(.footnote).foregroundStyle(.secondary) }
                 }
@@ -127,7 +150,7 @@ struct ConnectionView: View {
                     address = endpoint.host
                 }
             }
-            .onDisappear { discovery.stop(); pin = "" }
+            .onDisappear { discovery.stop(); adbDiscovery.stop(); pin = "" }
         }
     }
 }

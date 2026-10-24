@@ -6,6 +6,10 @@ final class ToolkitModel {
     private(set) var busy = false
     private(set) var progress = ""
     var error: String?
+    var notice: String?
+    private var partialFailure = false
+    private(set) var packageSummaries: [String: String] = [:]
+    private(set) var packageSizes: [String: Int64] = [:]
     private(set) var packages: [PortalPackage] = []
     private(set) var information: [String: String] = [:]
     private(set) var history: [ToolkitHistory] = []
@@ -21,13 +25,13 @@ final class ToolkitModel {
 
     func perform(_ activity: ToolkitActivity, requiresPortal: Bool = true, operation: @escaping @MainActor () async throws -> Void) {
         guard !busy else { return }
-        busy = true; error = nil; progress = activity.title
+        busy = true; error = nil; notice = nil; partialFailure = false; progress = activity.title
         Task {
             defer { busy = false; progress = "" }
             do {
                 if requiresPortal { try await validatePortal() }
                 try await operation()
-                record(activity, success: true)
+                record(activity, success: !partialFailure)
             }
             catch { self.error = error.localizedDescription; record(activity, success: false) }
         }
@@ -61,15 +65,21 @@ final class ToolkitModel {
               let range = text.range(of: "\n" + marker, options: .backwards) else { throw ADBToolError.invalidData }
         let code = text[range.upperBound...].trimmingCharacters(in: .whitespacesAndNewlines)
         let output = String(text[..<range.lowerBound]).trimmingCharacters(in: .whitespacesAndNewlines)
-        guard code == "0" else { throw ADBToolError.refused(String(output.prefix(800))) }
+        guard code == "0" else { throw ADBToolError.refused(ADBTools.installationError(output)) }
         return output
     }
 
-    func refreshPackages() async throws {
+    func refreshPackages(loadDetails: Bool = false) async throws {
         let text = try await shell("pm list packages -3")
         packages = try text.split(whereSeparator: \.isNewline).filter { $0.hasPrefix("package:") }.map {
             PortalPackage(packageName: try ADBTools.package(String($0.dropFirst(8)).trimmingCharacters(in: .whitespacesAndNewlines)))
         }.sorted { $0.packageName < $1.packageName }
+        packageSummaries = packageSummaries.filter { key, _ in packages.contains { $0.packageName == key } }
+        guard loadDetails else { return }
+        for app in packages {
+            guard adb.isConnected, !Task.isCancelled else { break }
+            _ = try? await packageDetails(app.packageName)
+        }
     }
 
     func refreshInfo() async throws {
@@ -96,9 +106,11 @@ final class ToolkitModel {
 
     func packageDetails(_ package: String) async throws -> String {
         let dump = try await shell("dumpsys package " + ADBTools.quote(ADBTools.package(package)))
-        let versions = dump.split(whereSeparator: \.isNewline).filter {
+        let lines = dump.split(whereSeparator: \.isNewline).map { $0.trimmingCharacters(in: .whitespaces) }
+        let versions = lines.filter {
             $0.contains("versionName=") || $0.contains("versionCode=") || $0.contains("minSdk=")
-        }.map { $0.trimmingCharacters(in: .whitespaces) }.prefix(4).joined(separator: "\n")
+        }.prefix(4).joined(separator: "\n")
+        let version = lines.first(where: { $0.hasPrefix("versionName=") }).map { String($0.dropFirst("versionName=".count)) }
         let paths = try await shell("pm path " + ADBTools.quote(ADBTools.package(package)))
         var total: Int64 = 0
         for line in paths.split(whereSeparator: \.isNewline) where line.hasPrefix("package:") {
@@ -109,6 +121,9 @@ final class ToolkitModel {
                 total += kb * 1024
             }
         }
+        packageSizes[package] = total
+        let size = ByteCountFormatter.string(fromByteCount: total, countStyle: .file)
+        packageSummaries[package] = [version.map { String(localized: "Versión \($0)") }, total > 0 ? size : nil].compactMap { $0 }.joined(separator: " · ")
         return versions + (total > 0 ? "\n" + String(localized: "Tamaño: \(ByteCountFormatter.string(fromByteCount: total, countStyle: .file))") : "")
     }
 
@@ -117,7 +132,7 @@ final class ToolkitModel {
             throw ADBToolError.refused(String(localized: "Esta app no se puede eliminar desde Remio para conservar el mando del Portal."))
         }
         let result = try await shell("pm uninstall " + ADBTools.quote(ADBTools.package(package)))
-        guard result == "Success" else { throw ADBToolError.refused(result) }
+        guard result == "Success" else { throw ADBToolError.refused(ADBTools.installationError(result)) }
         try await refreshPackages()
     }
 
@@ -137,18 +152,55 @@ final class ToolkitModel {
     }
 
     func install(_ data: Data) async throws {
-        guard data.starts(with: [0x50, 0x4b, 0x03, 0x04]) else { throw ADBToolError.refused(String(localized: "Selecciona un archivo APK válido.")) }
+        let sdkText = try await shell("getprop ro.build.version.sdk")
+        guard let sdk = Int(sdkText) else { throw ADBToolError.invalidData }
+        let metadata = try await Task.detached { try APKInspector.inspect(data, sdk: sdk) }.value
+        guard metadata.split == nil || metadata.split?.isEmpty == true else {
+            throw ADBToolError.refused(String(localized: "Este archivo es un APK dividido. Restaura la copia completa con todos sus componentes."))
+        }
         let path = "/data/local/tmp/remio-" + UUID().uuidString + ".apk"
         try await push(data, to: path)
         do {
             let output = try await shell("pm install -r " + ADBTools.quote(path))
             _ = try? await shell("rm -f " + ADBTools.quote(path))
-            guard output.hasSuffix("Success") else { throw ADBToolError.refused(output) }
+            guard output.hasSuffix("Success") else { throw ADBToolError.refused(ADBTools.installationError(output)) }
         } catch { _ = try? await shell("rm -f " + ADBTools.quote(path)); throw error }
     }
 
+    func installBatch(_ files: [URL]) async throws {
+        guard !files.isEmpty, files.count <= 30 else { throw ADBToolError.invalidData }
+        let sdkText = try await shell("getprop ro.build.version.sdk")
+        guard let sdk = Int(sdkText) else { throw ADBToolError.invalidData }
+        try await Task.detached {
+            var bytes = 0
+            var packages = Set<String>()
+            for file in files {
+                let data = try ImageTransfer.read(file)
+                bytes += data.count
+                guard bytes <= ADBTools.limit else { throw ADBToolError.tooLarge }
+                let metadata = try APKInspector.inspect(data, sdk: sdk)
+                guard metadata.split?.isEmpty != false, packages.insert(metadata.package).inserted else {
+                    throw ADBToolError.refused(String(localized: "El lote contiene componentes divididos o aplicaciones duplicadas."))
+                }
+            }
+        }.value
+        for (index, file) in files.enumerated() {
+            progress = String(localized: "Instalando APK \(index+1) de \(files.count)")
+            do {
+                let data = try await Task.detached { try ImageTransfer.read(file) }.value
+                try await install(data)
+            } catch {
+                throw ADBToolError.refused(String(localized: "Se instalaron \(index) de \(files.count) apps. \(error.localizedDescription)"))
+            }
+        }
+        try await refreshPackages()
+    }
+
     func uploadPhoto(_ data: Data, extension suffix: String) async throws {
-        guard ["jpg", "jpeg", "png", "heic", "heif", "gif", "webp"].contains(suffix) else { throw ADBToolError.invalidData }
+        guard ["jpg", "jpeg", "png", "heic", "heif", "gif", "webp"].contains(suffix) else {
+            throw ADBToolError.refused(String(localized: "Usa imágenes JPEG, PNG, HEIC, HEIF, GIF o WebP."))
+        }
+        try await Task.detached { try ImageTransfer.validate(data, suffix: suffix) }.value
         _ = try await shell("mkdir -p /sdcard/Pictures/Remio")
         let path = "/sdcard/Pictures/Remio/" + UUID().uuidString + "." + suffix
         try await push(data, to: path)
@@ -173,11 +225,11 @@ final class ToolkitModel {
         try await refreshUpdates()
         guard blocked ? disabledOTA.count == otaPackages.count : disabledOTA.isEmpty else { throw ADBToolError.refused(String(localized: "No se pudo verificar el cambio.")) }
     }
-    private static let settings = ["screen_brightness", "screen_off_timeout", "accelerometer_rotation", "user_rotation", "volume_music", "volume_ring", "volume_alarm"]
+    private static let settings = ADBTools.backupSettings
 
     func createBackup(packages selected: Set<String>) async throws -> Data {
         try await refreshPackages()
-        guard !selected.isEmpty, selected.isSubset(of: Set(packages.map(\.packageName))) else { throw ADBToolError.invalidData }
+        guard selected.isSubset(of: Set(packages.map(\.packageName))) else { throw ADBToolError.invalidData }
         var entries: [String: Data] = [:], records: [ToolkitBackup.App] = [], settings: [String: String] = [:]
         var total = 0
         for (index, package) in selected.sorted().enumerated() {
@@ -199,28 +251,76 @@ final class ToolkitModel {
         }
         for key in Self.settings {
             let value = try await shell("settings get system " + key)
-            if !value.isEmpty, value != "null", value.count < 32,
-               value.allSatisfy({ $0.isNumber || $0 == "-" || $0 == "." }) { settings["system."+key] = value }
+            if let value = ADBTools.backupSetting(key, value: value) { settings["system."+key] = value }
         }
         let manufacturer = try await shell("getprop ro.product.manufacturer")
         let model = try await shell("getprop ro.product.model")
         let sdk = try await shell("getprop ro.build.version.sdk")
         let manifest = ToolkitBackup(formatVersion: 1, createdAt: Int64(Date().timeIntervalSince1970*1000),
             device: .init(manufacturer: manufacturer, model: model, sdk: sdk), settings: settings, apps: records)
+        guard !records.isEmpty || !settings.isEmpty else { throw ADBToolError.invalidData }
         entries["manifest.json"] = try JSONEncoder().encode(manifest)
         progress = String(localized: "Preparando archivo ZIP")
         return try await Task.detached { try ToolkitArchive.encode(entries) }.value
     }
 
     func restoreBackup(_ entries: [String: Data], settings restoreSettings: Bool) async throws {
-        let manifest = try ToolkitBackup.inspect(entries)
+        let manifest = try await Task.detached { try ToolkitBackup.inspect(entries) }.value
         let model = try await shell("getprop ro.product.model")
         let sdk = try await shell("getprop ro.build.version.sdk")
         guard manifest.device.model == model, manifest.device.sdk == sdk else {
             throw ADBToolError.refused(String(localized: "Esta copia corresponde a otro modelo o versión de Android."))
         }
+        guard let sdkNumber = Int(sdk) else { throw ADBToolError.invalidData }
+        // Validate every manifest/package/minSDK before the first remote write.
+        try await Task.detached {
+            for app in manifest.apps {
+                var baseCount = 0
+                var splitNames = Set<String>()
+                for file in app.files {
+                    guard let data = entries["apps/\(app.packageName)/\(file)"] else { throw ADBToolError.invalidData }
+                    let metadata = try APKInspector.inspect(data, expectedPackage: app.packageName, sdk: sdkNumber)
+                    if let split = metadata.split, !split.isEmpty {
+                        guard splitNames.insert(split).inserted else { throw ADBToolError.invalidData }
+                    } else { baseCount += 1 }
+                }
+                guard baseCount == 1 else { throw ADBToolError.invalidData }
+            }
+        }.value
+        var result = RestoreProgress(total: manifest.apps.count)
+        var failures: [String] = []
         for (index, app) in manifest.apps.enumerated() {
             progress = String(localized: "Restaurando app \(index+1) de \(manifest.apps.count)")
+            do {
+                try await restoreApp(app, entries: entries)
+                result.record(success: true)
+            } catch {
+                failures.append(app.packageName + ": " + error.localizedDescription)
+                result.record(success: false)
+                if result.shouldStop || !adb.isConnected || Task.isCancelled { break }
+            }
+        }
+        let skipped = result.skipped
+        var restoredSettings = 0
+        // Avoid applying settings after a partial app restore.
+        if restoreSettings && result.canRestoreSettings {
+            for name in Self.settings {
+                guard let raw = manifest.settings["system." + name], let value = ADBTools.backupSetting(name, value: raw) else { continue }
+                do {
+                    _ = try await shell("settings put system " + name + " " + ADBTools.quote(value))
+                    restoredSettings += 1
+                } catch {
+                    failures.append(name + ": " + error.localizedDescription)
+                    break
+                }
+            }
+        }
+        partialFailure = !failures.isEmpty || skipped > 0
+        notice = String(localized: "Restauración: \(result.installed) apps instaladas, \(failures.count) fallos, \(skipped) omitidas y \(restoredSettings) ajustes.")
+        if !failures.isEmpty { notice! += "\n\n" + failures.joined(separator: "\n") }
+    }
+
+    private func restoreApp(_ app: ToolkitBackup.App, entries: [String: Data]) async throws {
             if app.files.count == 1 { try await install(entries["apps/\(app.packageName)/\(app.files[0])"]!) }
             else {
                 let response = try await shell("pm install-create -r")
@@ -234,21 +334,13 @@ final class ToolkitModel {
                         do {
                             let reply = try await shell("pm install-write -S \(data.count) \(session) split\(part) " + ADBTools.quote(path))
                             _ = try? await shell("rm -f " + ADBTools.quote(path))
-                            guard reply.hasPrefix("Success") else { throw ADBToolError.refused(reply) }
+                            guard reply.hasPrefix("Success") else { throw ADBToolError.refused(ADBTools.installationError(reply)) }
                         } catch { _ = try? await shell("rm -f " + ADBTools.quote(path)); throw error }
                     }
                     let result = try await shell("pm install-commit \(session)")
-                    guard result.hasSuffix("Success") else { throw ADBToolError.refused(result) }
+                    guard result.hasSuffix("Success") else { throw ADBToolError.refused(ADBTools.installationError(result)) }
                 } catch { _ = try? await shell("pm install-abandon \(session)"); throw error }
             }
-        }
-        if restoreSettings {
-            for name in Self.settings {
-                guard let value = manifest.settings["system." + name], !value.isEmpty, value.count < 32,
-                      value.allSatisfy({ $0.isNumber || $0 == "-" || $0 == "." }) else { continue }
-                _ = try await shell("settings put system " + name + " " + ADBTools.quote(value))
-            }
-        }
     }
 
 }

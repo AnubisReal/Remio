@@ -36,7 +36,7 @@ struct RemioApp: App {
             .scrollEdgeEffectHidden(true, for: .top)
             #if DEBUG && targetEnvironment(simulator)
             .task {
-                if ProcessInfo.processInfo.environment["REMIO_TOOLS_PREVIEW"] == "1" { selectedTab = 1 }
+                if ["REMIO_TOOLS_PREVIEW", "REMIO_PHOTOS_PREVIEW", "REMIO_BACKUPS_PREVIEW"].contains(where: { ProcessInfo.processInfo.environment[$0] == "1" }) { selectedTab = 1 }
                 if ProcessInfo.processInfo.arguments.contains("--localization-self-test") { localizationSelfTest() }
                 if ProcessInfo.processInfo.environment["REMIO_SETTINGS_PREVIEW"] == "1" { selectedTab = 2 }
                 if ProcessInfo.processInfo.arguments.contains("--keychain-self-test") { keychainSelfTest() }

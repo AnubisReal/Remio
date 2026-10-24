@@ -149,3 +149,59 @@ struct SavedADBPortal: Codable, Identifiable {
     var name: String
     var id: String { endpoint.id }
 }
+
+extension ADBTools {
+    /// Scan at most the current /24, intersected with the real interface netmask.
+    static func scanHosts(address: String, mask: String) throws -> [String] {
+        _ = try PortalEndpoint(host: address)
+        func number(_ value: String) throws -> UInt32 {
+            let parts = value.split(separator: ".", omittingEmptySubsequences: false)
+            guard parts.count == 4 else { throw ADBToolError.invalidData }
+            return try parts.reduce(UInt32(0)) { result, part in
+                guard let byte = UInt8(part), String(byte) == part else { throw ADBToolError.invalidData }
+                return result << 8 | UInt32(byte)
+            }
+        }
+        let local = try number(address), netmask = try number(mask)
+        let inverse = ~netmask
+        guard inverse & (inverse &+ 1) == 0, netmask != 0 else { throw ADBToolError.invalidData }
+        let network = local & netmask, broadcast = network | inverse
+        let start = local & 0xffffff00
+        return (1...254).compactMap { suffix in
+            let host = start | UInt32(suffix)
+            guard host != local, host > network, host < broadcast else { return nil }
+            return [24, 16, 8, 0].map { String((host >> $0) & 255) }.joined(separator: ".")
+        }
+    }
+}
+
+struct RestoreProgress: Sendable {
+    let total: Int
+    private(set) var installed = 0
+    private(set) var failed = 0
+    private(set) var consecutiveFailures = 0
+    var skipped: Int { max(0, total - installed - failed) }
+    var shouldStop: Bool { consecutiveFailures >= 3 }
+    var canRestoreSettings: Bool { failed == 0 && skipped == 0 }
+    mutating func record(success: Bool) {
+        if success { installed += 1; consecutiveFailures = 0 }
+        else { failed += 1; consecutiveFailures += 1 }
+    }
+}
+
+extension ADBTools {
+    static let backupSettings = ["screen_brightness", "screen_off_timeout", "accelerometer_rotation", "user_rotation", "volume_music", "volume_ring", "volume_alarm"]
+    static func backupSetting(_ name: String, value: String) -> String? {
+        guard !value.isEmpty, value.count < 32, value.utf8.allSatisfy({ (48...57).contains($0) }), let number = Int64(value) else { return nil }
+        let range: ClosedRange<Int64>
+        switch name {
+        case "screen_brightness": range = 0...255
+        case "screen_off_timeout": range = 1000...86_400_000
+        case "accelerometer_rotation": range = 0...1
+        case "user_rotation": range = 0...3
+        case "volume_music", "volume_ring", "volume_alarm": range = 0...100
+        default: return nil
+        }
+        return range.contains(number) ? String(number) : nil
+    }
+}

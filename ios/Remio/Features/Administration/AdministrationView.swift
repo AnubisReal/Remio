@@ -60,9 +60,10 @@ private enum ToolPage: String, CaseIterable, Identifiable, Hashable {
 private struct ToolkitView: View {
     @Environment(RemoteModel.self) private var remote
     @Bindable var tools: ToolkitModel
+    @State private var path: [ToolPage] = []
 
     var body: some View {
-        NavigationStack {
+        NavigationStack(path: $path) {
             ScrollView {
                 VStack(alignment: .leading, spacing: 26) {
                     toolGroup(String(localized: "Contenido"), pages: [.apps, .photos])
@@ -95,6 +96,10 @@ private struct ToolkitView: View {
                 ToolDetail(page: page, tools: tools)
             }
             #if DEBUG && targetEnvironment(simulator)
+            .task {
+                if ProcessInfo.processInfo.environment["REMIO_PHOTOS_PREVIEW"] == "1" { path = [.photos] }
+                if ProcessInfo.processInfo.environment["REMIO_BACKUPS_PREVIEW"] == "1" { path = [.backups] }
+            }
             .task(id: tools.adb.isConnected) {
                 if tools.adb.isConnected, ProcessInfo.processInfo.environment["REMIO_TOOLS_PREVIEW"] == "1" {
                     tools.perform(.verify) {
@@ -114,9 +119,9 @@ private struct ToolkitView: View {
                         .padding().background(.regularMaterial)
                 }
             }
-            .alert(String(localized: "Herramientas"), isPresented: Binding(get: { tools.error != nil }, set: { if !$0 { tools.error = nil } })) {
-                Button(String(localized: "Aceptar"), role: .cancel) { tools.error = nil }
-            } message: { Text(tools.error ?? "") }
+            .alert(String(localized: "Herramientas"), isPresented: Binding(get: { path.isEmpty && (tools.error != nil || tools.notice != nil) }, set: { if !$0 { tools.error = nil; tools.notice = nil } })) {
+                Button(String(localized: "Aceptar"), role: .cancel) { tools.error = nil; tools.notice = nil }
+            } message: { Text(tools.error ?? tools.notice ?? "") }
         }
     }
 
@@ -165,6 +170,8 @@ private struct ToolDetail: View {
     @State private var changeUpdates = false
     @State private var blockUpdates = false
     @State private var search = ""
+    @State private var sortBySize = false
+    @State private var apkMetadata: APKMetadata?
 
     var body: some View {
         List {
@@ -202,51 +209,70 @@ private struct ToolDetail: View {
         }
         .toolbarBackground(.hidden, for: .navigationBar)
         .navigationTitle(page.title).navigationBarTitleDisplayMode(.inline)
+        .alert(String(localized: "Herramientas"), isPresented: Binding(get: { selectedPackage == nil && (tools.error != nil || tools.notice != nil) }, set: { if !$0 { tools.error = nil; tools.notice = nil } })) {
+            Button(String(localized: "Aceptar"), role: .cancel) { tools.error = nil; tools.notice = nil }
+        } message: { Text(tools.error ?? tools.notice ?? "") }
         .task(id: tools.adb.isConnected) {
             // Let the native push animation finish before publishing loading state.
             guard tools.adb.isConnected else { return }
             do { try await Task.sleep(for: .milliseconds(350)) } catch { return }
             guard !Task.isCancelled else { return }
             switch page {
-            case .apps: if tools.packages.isEmpty { refresh() }
+            case .apps: if tools.packages.isEmpty || tools.packageSummaries.isEmpty { refresh() }
             case .device: if tools.information.isEmpty { refresh() }
             case .updates: if tools.otaPackages.isEmpty { refresh() }
             default: break
             }
         }
+        #if DEBUG && targetEnvironment(simulator)
+        .task {
+            if page == .photos, ProcessInfo.processInfo.environment["REMIO_PHOTOS_PREVIEW"] == "1" {
+                let url = FileManager.default.temporaryDirectory.appendingPathComponent("remio-review.png")
+                if let data = UIImage(systemName: "photo")?.pngData() {
+                    try? data.write(to: url); imageFiles = [url]
+                    do { try await Task.sleep(for: .milliseconds(500)) } catch { return }
+                    confirmImageFiles = true
+                }
+            }
+        }
+        #endif
         .fileImporter(isPresented: $importFiles,
-                      allowedContentTypes: selectingAPK ? [UTType(filenameExtension: "apk") ?? .data] : [.image],
+                      allowedContentTypes: selectingAPK ? [UTType(filenameExtension: "apk") ?? .data] : ["jpg", "png", "heic", "heif", "gif", "webp"].compactMap { UTType(filenameExtension: $0) },
                       allowsMultipleSelection: !selectingAPK) { result in
             do {
                 let urls = try result.get()
                 if selectingAPK {
                     guard let url = urls.first else { return }
                     guard url.pathExtension.lowercased() == "apk" else { throw ADBToolError.refused(String(localized: "Selecciona un archivo APK.")) }
-                    selectedAPK = url
-                    confirmInstall = true
+                    tools.perform(.appDetails, requiresPortal: false) {
+                        let metadata = try await Task.detached { try APKInspector.inspect(ImageTransfer.read(url)) }.value
+                        apkMetadata = metadata; selectedAPK = url; confirmInstall = true
+                    }
                 } else {
                     guard urls.count <= 30 else { throw ADBToolError.refused(String(localized: "Selecciona un máximo de 30 imágenes.")) }
                     imageFiles = urls
-                    confirmImageFiles = !urls.isEmpty
+                    photos = []
                 }
             } catch { tools.error = error.localizedDescription }
         }
-        .confirmationDialog(String(localized: "¿Enviar las imágenes seleccionadas?"), isPresented: $confirmImageFiles, titleVisibility: .visible) {
-            Button(String(localized: "Enviar \(imageFiles.count) imágenes")) {
+        .alert(String(localized: "¿Enviar las imágenes seleccionadas?"), isPresented: $confirmImageFiles) {
+            Button(String(localized: "Enviar")) {
                 let files = imageFiles
                 tools.perform(.uploadFiles) {
                     for (index, url) in files.enumerated() {
-                        let access = url.startAccessingSecurityScopedResource()
-                        defer { if access { url.stopAccessingSecurityScopedResource() } }
-                        let values = try url.resourceValues(forKeys: [.fileSizeKey, .isRegularFileKey])
-                        guard values.isRegularFile == true, let size = values.fileSize, size > 0, size <= ADBTools.limit else { throw ADBToolError.tooLarge }
-                        try await tools.uploadPhoto(Data(contentsOf: url, options: .mappedIfSafe), extension: url.pathExtension.lowercased())
+                        do {
+                            let data = try await Task.detached { try ImageTransfer.read(url) }.value
+                            try await tools.uploadPhoto(data, extension: url.pathExtension.lowercased())
+                            imageFiles.removeAll { $0 == url }
+                        } catch {
+                            throw ADBToolError.refused(String(localized: "Se enviaron \(index) de \(files.count) imágenes. \(error.localizedDescription)"))
+                        }
                         tools.setProgress(String(localized: "Enviando imagen \(index + 1) de \(files.count)"))
                     }
                     imageFiles = []
                 }
             }
-            Button(String(localized: "Cancelar"), role: .cancel) { imageFiles = [] }
+            Button(String(localized: "Cancelar"), role: .cancel) { }
         } message: { Text(String(localized: "Se guardarán en Pictures/Remio del Portal.")) }
         .confirmationDialog(String(localized: "¿Instalar este APK en el Portal?"), isPresented: $confirmInstall, titleVisibility: .visible) {
             Button(String(localized: "Instalar")) {
@@ -261,32 +287,41 @@ private struct ToolDetail: View {
                     let size = try selectedAPK.resourceValues(forKeys: [.fileSizeKey]).fileSize ?? 0
                     guard size > 0, size <= ADBTools.limit else { throw ADBToolError.tooLarge }
                     try await tools.install(Data(contentsOf: selectedAPK, options: .mappedIfSafe))
-                    try await tools.refreshPackages()
+                    try await tools.refreshPackages(loadDetails: true)
                 }
             }
             Button(String(localized: "Cancelar"), role: .cancel) { selectedAPK = nil }
-        } message: { Text(selectedAPK?.lastPathComponent ?? "") }
+        } message: {
+            Text(selectedAPK?.lastPathComponent ?? "")
+            if let apkMetadata { Text("\(apkMetadata.package) · Android API \(apkMetadata.minSDK)") }
+        }
         .confirmationDialog(String(localized: "¿Desinstalar esta app?"), isPresented: $confirmDelete, titleVisibility: .visible) {
             Button(String(localized: "Desinstalar"), role: .destructive) {
                 guard let selectedPackage = selectedForDeletion else { return }
                 tools.perform(.uninstall(selectedPackage.packageName)) { try await tools.uninstall(selectedPackage.packageName) }
             }
         } message: { Text(String(localized: "Se eliminarán la app y sus datos del Portal.")) }
-        .confirmationDialog(String(localized: "¿Enviar las fotos seleccionadas?"), isPresented: $confirmPhotos, titleVisibility: .visible) {
-            Button(String(localized: "Enviar \(photos.count) fotos")) {
+        .alert(String(localized: "¿Enviar las fotos seleccionadas?"), isPresented: $confirmPhotos) {
+            Button(String(localized: "Enviar")) {
                 let items = photos
                 tools.perform(.uploadPhotos) {
                     for (index, item) in items.enumerated() {
                         guard let type = item.supportedContentTypes.first(where: { $0.conforms(to: .image) }),
                               let suffix = type.preferredFilenameExtension,
                               let data = try await item.loadTransferable(type: Data.self) else { throw ADBToolError.invalidData }
-                        try await tools.uploadPhoto(data, extension: suffix)
+                        do {
+                            try await tools.uploadPhoto(data, extension: suffix)
+                            photos.removeAll { $0 == item }
+                        } catch {
+                            throw ADBToolError.refused(String(localized: "Se enviaron \(index) de \(items.count) imágenes. \(error.localizedDescription)"))
+                        }
                         tools.setProgress(String(localized: "Enviando foto \(index + 1) de \(items.count)"))
                     }
                     photos = []
                 }
             }
-        }
+            Button(String(localized: "Cancelar"), role: .cancel) { }
+        } message: { Text(String(localized: "Se guardarán en Pictures/Remio del Portal.")) }
         .confirmationDialog(blockUpdates ? String(localized: "¿Bloquear las actualizaciones del Portal?") : String(localized: "¿Restablecer las actualizaciones del Portal?"), isPresented: $changeUpdates, titleVisibility: .visible) {
             Button(blockUpdates ? String(localized: "Bloquear") : String(localized: "Restablecer"), role: blockUpdates ? .destructive : nil) {
                 tools.perform(.changeUpdates) { try await tools.setUpdates(blocked: blockUpdates) }
@@ -305,6 +340,9 @@ private struct ToolDetail: View {
                 }
                 .toolbarBackground(.hidden, for: .navigationBar)
                 .navigationTitle(appName(app)).navigationBarTitleDisplayMode(.inline)
+                .alert(String(localized: "Herramientas"), isPresented: Binding(get: { tools.error != nil }, set: { if !$0 { tools.error = nil } })) {
+                    Button(String(localized: "Aceptar"), role: .cancel) { tools.error = nil }
+                } message: { Text(tools.error ?? "") }
                 .toolbar { ToolbarItem(placement: .topBarTrailing) { Button(String(localized: "Cerrar"), systemImage: "xmark") { selectedPackage = nil } } }
             }.presentationDetents([.medium, .large])
         }
@@ -318,7 +356,11 @@ private struct ToolDetail: View {
             Section { Button(String(localized: "Instalar APK"), systemImage: "square.and.arrow.down") { selectingAPK = true; importFiles = true }.disabled(tools.busy) }
             Section(String(localized: "En el Portal · \(tools.packages.count)")) {
                 TextField(String(localized: "Buscar app"), text: $search).textInputAutocapitalization(.never).autocorrectionDisabled()
-                ForEach(tools.packages.filter { search.isEmpty || appName($0).localizedCaseInsensitiveContains(search) || $0.packageName.localizedCaseInsensitiveContains(search) }) { app in
+                Toggle(String(localized: "Ordenar por tamaño"), isOn: $sortBySize)
+                ForEach(tools.packages.filter { search.isEmpty || appName($0).localizedCaseInsensitiveContains(search) || $0.packageName.localizedCaseInsensitiveContains(search) }.sorted {
+                    if sortBySize { return (tools.packageSizes[$0.packageName] ?? 0) > (tools.packageSizes[$1.packageName] ?? 0) }
+                    return appName($0).localizedStandardCompare(appName($1)) == .orderedAscending
+                }) { app in
                     Button {
                         details = String(localized: "Cargando…"); selectedPackage = app
                         tools.perform(.appDetails) { details = try await tools.packageDetails(app.packageName) }
@@ -328,6 +370,7 @@ private struct ToolDetail: View {
                             VStack(alignment: .leading, spacing: 3) {
                                 Text(appName(app)).foregroundStyle(.primary)
                                 if appName(app) != app.packageName { Text(app.packageName).font(.caption).foregroundStyle(.secondary) }
+                                if let summary = tools.packageSummaries[app.packageName] { Text(summary).font(.caption2).foregroundStyle(.secondary).lineLimit(2) }
                             }
                         }.padding(.vertical, 3)
                     }.disabled(!ready)
@@ -340,11 +383,18 @@ private struct ToolDetail: View {
         Section {
             PhotosPicker(selection: $photos, maxSelectionCount: 30, matching: .images) { Label(String(localized: "Elegir de la fototeca"), systemImage: "photo.on.rectangle") }.disabled(!ready)
             Button(String(localized: "Elegir de Archivos"), systemImage: "folder") { selectingAPK = false; importFiles = true }.disabled(!ready)
+            if !imageFiles.isEmpty {
+                LabeledContent(String(localized: "Seleccionadas"), value: String(imageFiles.count))
+                PhotoReviewGrid(files: imageFiles)
+                Button(String(localized: "Enviar al Portal"), systemImage: "square.and.arrow.up") { confirmImageFiles = true }.disabled(!ready)
+            }
             if !photos.isEmpty {
+                PhotoReviewGrid(photos: photos)
                 LabeledContent(String(localized: "Seleccionadas"), value: String(photos.count))
                 Button(String(localized: "Enviar al Portal"), systemImage: "square.and.arrow.up") { confirmPhotos = true }.disabled(!ready)
             }
         } footer: { Text(String(localized: "Se guardan en Pictures/Remio del Portal.")) }
+        .onChange(of: photos) { _, items in if !items.isEmpty { imageFiles = [] } }
     }
     private var updates: some View {
         Group {
@@ -363,7 +413,7 @@ private struct ToolDetail: View {
     private func refresh() {
         guard !tools.busy else { return }
         switch page {
-        case .apps: tools.perform(.applications) { try await tools.refreshPackages() }
+        case .apps: tools.perform(.applications) { try await tools.refreshPackages(loadDetails: true) }
         case .device: tools.perform(.device) { try await tools.refreshInfo() }
         case .updates: tools.perform(.updates) { try await tools.refreshUpdates() }
         default: break

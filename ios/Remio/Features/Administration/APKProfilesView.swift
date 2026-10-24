@@ -53,14 +53,11 @@ struct APKProfilesView: View {
             Button(String(localized: "Instalar lote")) {
                 guard let selected else { return }
                 tools.perform(.installBatch(selected.name)) {
-                    for (index, file) in selected.files.enumerated() {
+                    let files = try selected.files.map { file -> URL in
                         guard !file.contains("/"), file.hasSuffix(".apk") else { throw ADBToolError.invalidData }
-                        tools.setProgress(String(localized: "Instalando APK \(index+1) de \(selected.files.count)"))
-                        let url = root.appendingPathComponent(selected.id.uuidString).appendingPathComponent(file)
-                        let size = try url.resourceValues(forKeys: [.fileSizeKey]).fileSize ?? 0
-                        guard size > 0, size <= ADBTools.limit else { throw ADBToolError.tooLarge }
-                        try await tools.install(Data(contentsOf: url, options: .mappedIfSafe))
+                        return root.appendingPathComponent(selected.id.uuidString).appendingPathComponent(file)
                     }
+                    try await tools.installBatch(files)
                 }
             }
         }

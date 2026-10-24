@@ -95,9 +95,9 @@ enum ToolkitArchive {
     }
 }
 
-struct ToolkitBackup: Codable {
-    struct Device: Codable { let manufacturer: String; let model: String; let sdk: String }
-    struct App: Codable { let packageName: String; let files: [String] }
+struct ToolkitBackup: Codable, Sendable {
+    struct Device: Codable, Sendable { let manufacturer: String; let model: String; let sdk: String }
+    struct App: Codable, Sendable { let packageName: String; let files: [String] }
     let formatVersion: Int
     let createdAt: Int64
     let device: Device
@@ -108,13 +108,23 @@ struct ToolkitBackup: Codable {
         guard let data = entries["manifest.json"], data.count <= 1_048_576 else { throw ADBToolError.invalidData }
         let manifest = try JSONDecoder().decode(ToolkitBackup.self, from: data)
         guard manifest.formatVersion == 1, manifest.apps.count <= 200,
+              (0...4_102_444_800_000).contains(manifest.createdAt),
+              !manifest.device.model.isEmpty, manifest.device.model.count <= 128,
+              let sdk = Int(manifest.device.sdk), (1...10000).contains(sdk),
+              !manifest.apps.isEmpty || !manifest.settings.isEmpty,
               Set(manifest.apps.map(\.packageName)).count == manifest.apps.count else { throw ADBToolError.invalidData }
+        for key in ADBTools.backupSettings {
+            if let value = manifest.settings["system." + key], ADBTools.backupSetting(key, value: value) == nil {
+                throw ADBToolError.invalidData
+            }
+        }
         for app in manifest.apps {
             _ = try ADBTools.package(app.packageName)
             guard !app.files.isEmpty, app.files.count <= 50, Set(app.files).count == app.files.count else { throw ADBToolError.invalidData }
             for file in app.files {
                 guard !file.contains("/"), file.hasSuffix(".apk"), let apk = entries["apps/\(app.packageName)/\(file)"],
                       apk.starts(with: [0x50,0x4b,0x03,0x04]) else { throw ADBToolError.invalidData }
+                _ = try APKInspector.inspect(apk, expectedPackage: app.packageName)
             }
         }
         return manifest

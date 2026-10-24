@@ -4754,6 +4754,584 @@
           }
         }
       }
+    },
+    "%@ · Android API %lld": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ · Android API %lld"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ · Android API %lld"
+          }
+        }
+      }
+    },
+    "Busca hasta 253 direcciones de tu segmento Wi-Fi. Los resultados son servicios ADB sin identificar; selecciona uno para autorizar y comprobar el equipo.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Busca hasta 253 direcciones de tu segmento Wi-Fi. Los resultados son servicios ADB sin identificar; selecciona uno para autorizar y comprobar el equipo."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Search up to 253 addresses on your Wi-Fi segment. Results are unidentified ADB services; select one to authorize and check the device."
+          }
+        }
+      }
+    },
+    "Buscar servicios ADB": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Buscar servicios ADB"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Find ADB services"
+          }
+        }
+      }
+    },
+    "Búsqueda ADB": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Búsqueda ADB"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ADB discovery"
+          }
+        }
+      }
+    },
+    "Conecta el iPhone a una red Wi-Fi privada para buscar ADB.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Conecta el iPhone a una red Wi-Fi privada para buscar ADB."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Connect your iPhone to a private Wi-Fi network to find ADB services."
+          }
+        }
+      }
+    },
+    "Creada": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Creada"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Created"
+          }
+        }
+      }
+    },
+    "El APK no corresponde al paquete declarado en la copia.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El APK no corresponde al paquete declarado en la copia."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The APK does not match the package declared in the backup."
+          }
+        }
+      }
+    },
+    "El APK no es compatible con la arquitectura del Portal.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El APK no es compatible con la arquitectura del Portal."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The APK does not support your Portal’s architecture."
+          }
+        }
+      }
+    },
+    "El APK requiere Android API %lld; el Portal tiene API %lld.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El APK requiere Android API %lld; el Portal tiene API %lld."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The APK requires Android API %lld; your Portal has API %lld."
+          }
+        }
+      }
+    },
+    "El APK requiere una versión de Android más reciente.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El APK requiere una versión de Android más reciente."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The APK requires a newer version of Android."
+          }
+        }
+      }
+    },
+    "El APK requiere una versión preliminar de Android no compatible.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El APK requiere una versión preliminar de Android no compatible."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The APK requires an unsupported preview version of Android."
+          }
+        }
+      }
+    },
+    "El Portal bloqueó la instalación por seguridad.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El Portal bloqueó la instalación por seguridad."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Portal blocked the installation for security reasons."
+          }
+        }
+      }
+    },
+    "El Portal no pudo interpretar el APK. Comprueba que el archivo esté completo.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El Portal no pudo interpretar el APK. Comprueba que el archivo esté completo."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Portal could not parse the APK. Make sure the file is complete."
+          }
+        }
+      }
+    },
+    "El Portal rechazó el APK porque no es válido.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El Portal rechazó el APK porque no es válido."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Portal rejected the APK because it is invalid."
+          }
+        }
+      }
+    },
+    "El Portal ya tiene una versión más reciente de esta app.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El Portal ya tiene una versión más reciente de esta app."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Portal already has a newer version of this app."
+          }
+        }
+      }
+    },
+    "El archivo no contiene un manifiesto APK válido.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El archivo no contiene un manifiesto APK válido."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The file does not contain a valid APK manifest."
+          }
+        }
+      }
+    },
+    "El archivo no es una imagen válida o su extensión no coincide.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El archivo no es una imagen válida o su extensión no coincide."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The file is not a valid image or its extension does not match."
+          }
+        }
+      }
+    },
+    "Enviar": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enviar"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Send"
+          }
+        }
+      }
+    },
+    "Este archivo es un APK dividido. Restaura la copia completa con todos sus componentes.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Este archivo es un APK dividido. Restaura la copia completa con todos sus componentes."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This file is a split APK. Restore the full backup with all its components."
+          }
+        }
+      }
+    },
+    "Imagen seleccionada": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Imagen seleccionada"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Selected image"
+          }
+        }
+      }
+    },
+    "La firma del APK no coincide con la app instalada. No se ha eliminado la app existente.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La firma del APK no coincide con la app instalada. No se ha eliminado la app existente."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The APK signature does not match the installed app. The existing app has not been removed."
+          }
+        }
+      }
+    },
+    "Las apps incompatibles pueden fallar. La restauración se detiene tras tres fallos consecutivos. Si alguna app falla, no se aplican los ajustes.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Las apps incompatibles pueden fallar. La restauración se detiene tras tres fallos consecutivos. Si alguna app falla, no se aplican los ajustes."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Incompatible apps may fail. Restoration stops after three consecutive failures. If any app fails, settings are not applied."
+          }
+        }
+      }
+    },
+    "Ninguna": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ninguna"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "None"
+          }
+        }
+      }
+    },
+    "No hay suficiente espacio libre en el Portal.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No hay suficiente espacio libre en el Portal."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "There is not enough free space on Portal."
+          }
+        }
+      }
+    },
+    "No se encontraron servicios ADB. Comprueba el puerto o introduce la IP.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se encontraron servicios ADB. Comprueba el puerto o introduce la IP."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No ADB services were found. Check the port or enter the IP address."
+          }
+        }
+      }
+    },
+    "Ordenar por tamaño": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ordenar por tamaño"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sort by size"
+          }
+        }
+      }
+    },
+    "Restauración: %lld apps instaladas, %lld fallos, %lld omitidas y %lld ajustes.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Restauración: %lld apps instaladas, %lld fallos, %lld omitidas y %lld ajustes."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Restore: %lld apps installed, %lld failures, %lld skipped, and %lld settings."
+          }
+        }
+      }
+    },
+    "SDK": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SDK"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SDK"
+          }
+        }
+      }
+    },
+    "Se creará una copia solo de ajustes.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Se creará una copia solo de ajustes."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A settings-only backup will be created."
+          }
+        }
+      }
+    },
+    "Seleccionar todas": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Seleccionar todas"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Select all"
+          }
+        }
+      }
+    },
+    "El lote contiene componentes divididos o aplicaciones duplicadas.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El lote contiene componentes divididos o aplicaciones duplicadas."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The batch contains split components or duplicate applications."
+          }
+        }
+      }
+    },
+    "Se instalaron %lld de %lld apps. %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Se instalaron %lld de %lld apps. %@"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Installed %lld of %lld apps. %@"
+          }
+        }
+      }
+    },
+    "Se enviaron %lld de %lld imágenes. %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Se enviaron %lld de %lld imágenes. %@"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sent %lld of %lld images. %@"
+          }
+        }
+      }
+    },
+    "Usa imágenes JPEG, PNG, HEIC, HEIF, GIF o WebP.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Usa imágenes JPEG, PNG, HEIC, HEIF, GIF o WebP."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Use JPEG, PNG, HEIC, HEIF, GIF, or WebP images."
+          }
+        }
+      }
     }
   },
   "version": "1.0"
