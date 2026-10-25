@@ -16,6 +16,15 @@
       "category": "utilities",
       "versions": [
         {
+          "version": "0.1.4",
+          "buildVersion": "5",
+          "date": "2026-10-25T00:07:02Z",
+          "localizedDescription": "# Remio 0.1.4\n\n- El contenedor de conexión ya no aparece brevemente al abrir Recientes o al arrancar Remio con una vinculación guardada.\n- Estados diferenciados para reconexión, pausa, conexión activa, desconexión confirmada y equipo sin vincular.\n- Los controles siguen bloqueados hasta confirmar la conexión; no se mantienen acciones activas en segundo plano ni se reenvían pulsaciones pendientes al volver.\n- Los errores reales y las sesiones caducadas siguen mostrando las opciones de conexión.\n- Estados nuevos disponibles en español e inglés.\n\nPruebas de regresión para arranque, pausa, cancelación, reconexión, fallo de red, sesión caducada y ausencia de reproducción de acciones. Requiere iOS/iPadOS 26 o posterior. IPA para carga lateral con AltStore Classic, SideStore o LiveContainer.\n\n",
+          "downloadURL": "https://github.com/AnubisReal/Remio/releases/download/v0.1.4/Remio.ipa",
+          "size": 1497569,
+          "minOSVersion": "26.0"
+        },
+        {
           "version": "0.1.3",
           "buildVersion": "4",
           "date": "2026-10-24T23:51:57Z",
