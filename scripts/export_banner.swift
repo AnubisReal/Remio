@@ -5,8 +5,8 @@ import ImageIO
 import UniformTypeIdentifiers
 
 // Vector wordmark: outlined glyphs render identically on GitHub without web fonts.
-let font = CTFontCreateWithName("AvenirNext-DemiBold" as CFString, 76, nil)
-let line = CTLineCreateWithAttributedString(NSAttributedString(string: "Remio", attributes: [.init(kCTFontAttributeName as String): font, .init(kCTForegroundColorAttributeName as String): CGColor(gray: 240.0 / 255, alpha: 1)]))
+let font = CTFontCreateWithName("AvenirNext-DemiBold" as CFString, 22, nil)
+let line = CTLineCreateWithAttributedString(NSAttributedString(string: "Remio", attributes: [.init(kCTFontAttributeName as String): font, .init(kCTForegroundColorAttributeName as String): CGColor(gray: 160.0 / 255, alpha: 1)]))
 var paths = ""
 for run in CTLineGetGlyphRuns(line) as! [CTRun] {
     let count = CTRunGetGlyphCount(run)
@@ -38,8 +38,8 @@ let svg = """
 <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="260" viewBox="0 0 1200 260" role="img" aria-labelledby="title">
 <title id="title">Remio</title>
 <rect width="1200" height="260" rx="24" fill="#121212"/>
-<g transform="translate(447 97) scale(.12) translate(-306 -252)">\(content)</g>
-<g fill="#F0F0F0" transform="translate(526 160) scale(1 -1)">\(paths)</g>
+<g transform="translate(557.25 78.13) scale(.19) translate(-306 -252)">\(content)</g>
+<g fill="#A0A0A0" transform="translate(1099 224) scale(1 -1)">\(paths)</g>
 </svg>
 """
 try svg.write(toFile: "design/identity/banner.svg", atomically: true, encoding: .utf8)
@@ -53,9 +53,9 @@ context.addPath(CGPath(roundedRect: CGRect(x: 0, y: 0, width: 1200, height: 260)
 context.fillPath()
 let markSource = CGImageSourceCreateWithURL(URL(fileURLWithPath: "design/identity/pulse/logo.png") as CFURL, nil)!
 let mark = CGImageSourceCreateImageAtIndex(markSource, 0, nil)!
-context.draw(mark, in: CGRect(x: 447 - 306 * 0.12, y: 260 - (97 - 252 * 0.12) - 1024 * 0.12, width: 1024 * 0.12, height: 1024 * 0.12))
-context.setFillColor(CGColor(gray: 240.0 / 255, alpha: 1))
-context.textPosition = CGPoint(x: 526, y: 100)
+context.draw(mark, in: CGRect(x: 557.25 - 306 * 0.19, y: 260 - (78.13 - 252 * 0.19) - 1024 * 0.19, width: 1024 * 0.19, height: 1024 * 0.19))
+context.setFillColor(CGColor(gray: 160.0 / 255, alpha: 1))
+context.textPosition = CGPoint(x: 1099, y: 36)
 CTLineDraw(line, context)
 let image = context.makeImage()!
 let destination = CGImageDestinationCreateWithURL(URL(fileURLWithPath: "design/identity/banner.png") as CFURL, UTType.png.identifier as CFString, 1, nil)!

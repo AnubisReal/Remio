@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="design/identity/banner.svg" width="100%" alt="Remio">
+  <img src="design/identity/banner.svg?v=3" width="100%" alt="Remio">
 </p>
 
 <p align="center"><strong>Tu Portal, en tus manos.</strong></p>
