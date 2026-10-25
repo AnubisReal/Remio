@@ -10,9 +10,9 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/AnubisReal/Remio/releases/latest/download/Remio.ipa"><img src="design/readme/download.svg" height="44" alt="Descargar el último IPA"></a>
+  <a href="https://github.com/AnubisReal/Remio/releases/latest/download/Remio.ipa"><img src="design/readme/download-centered.svg" height="44" alt="Descargar el último IPA"></a>
   &nbsp;
-  <a href="https://raw.githubusercontent.com/AnubisReal/Remio/main/distribution/source.json"><img src="design/readme/source.svg" height="44" alt="Ver la fuente de AltStore, SideStore y LiveContainer"></a>
+  <a href="https://raw.githubusercontent.com/AnubisReal/Remio/main/distribution/source.json"><img src="design/readme/source-centered.svg" height="44" alt="Ver la fuente de AltStore, SideStore y LiveContainer"></a>
 </p>
 
 <p align="center">
