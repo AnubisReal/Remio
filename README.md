@@ -8,6 +8,12 @@ Remio es un mando nativo para iPhone y iPad: mueve el cursor, escribe con el tec
 
 Disponible en **español e inglés**, seleccionados automáticamente según el idioma del dispositivo.
 
+<p align="center">
+  <img src="docs/screenshots/en/remote.png" width="32%" alt="Remio: mando y trackpad">
+  <img src="docs/screenshots/en/applications.png" width="32%" alt="Remio: selector de aplicaciones del Portal">
+  <img src="docs/screenshots/en/tools.png" width="32%" alt="Remio: herramientas ADB">
+</p>
+
 **Requisitos:** iOS/iPadOS 26 y un Portal con [Immortal](https://github.com/starbrightlab/immortal), en la misma Wi-Fi. Las herramientas requieren ADB habilitado y autorizado.
 
 ### Descargar
