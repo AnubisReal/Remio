@@ -55,11 +55,11 @@ La fuente incluye el icono y se actualiza con cada release estable. La validaciÃ
 </p>
 
 <p align="center">
-  <a href="https://github.com/AnubisReal"><img src="design/readme/social-github.svg" height="40" alt="GitHub de AnubisReal"></a>
+  <a href="https://github.com/AnubisReal"><img src="design/readme/profile-github.svg" height="40" alt="GitHub de AnubisReal"></a>
   &nbsp;
-  <a href="https://www.instagram.com/anubisreal/"><img src="design/readme/social-instagram.svg" height="40" alt="Instagram de anubisreal"></a>
+  <a href="https://www.instagram.com/anubisreal/"><img src="design/readme/profile-instagram.svg" height="40" alt="Instagram de anubisreal"></a>
   &nbsp;
-  <a href="https://x.com/Anubisreal23"><img src="design/readme/social-x.svg" height="40" alt="X de Anubisreal23"></a>
+  <a href="https://x.com/Anubisreal23"><img src="design/readme/profile-x.svg" height="40" alt="X de Anubisreal23"></a>
 </p>
 
 Gracias a [jurax-sys](https://github.com/jurax-sys) por [Portal Toolkit](https://github.com/jurax-sys/portal-toolkit), referencia para algunas de nuestras herramientas. Â¡Un saludo y gracias por compartirlo con la comunidad!
