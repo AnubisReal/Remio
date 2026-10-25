@@ -2,11 +2,22 @@
   <img src="design/identity/banner.svg" width="100%" alt="Remio">
 </p>
 
-<p align="center">Tu Portal, en tus manos.</p>
+<p align="center"><strong>Tu Portal, en tus manos.</strong></p>
 
-Remio es un mando nativo para iPhone y iPad: mueve el cursor, escribe con el teclado de iOS, abre aplicaciones y controla la reproducción de tu Portal. Incluye herramientas ADB para gestionar APK, enviar fotos y crear copias.
+<p align="center">
+  Un mando nativo para iPhone y iPad.<br>
+  Cursor, teclado, aplicaciones y reproducción, con herramientas ADB para gestionar tu Portal.
+</p>
 
-Disponible en **español e inglés**, seleccionados automáticamente según el idioma del dispositivo.
+<p align="center">
+  <a href="https://github.com/AnubisReal/Remio/releases/latest/download/Remio.ipa"><img src="design/readme/download.svg" height="44" alt="Descargar el último IPA"></a>
+  &nbsp;
+  <a href="https://raw.githubusercontent.com/AnubisReal/Remio/main/distribution/source.json"><img src="design/readme/source.svg" height="44" alt="Ver la fuente de AltStore, SideStore y LiveContainer"></a>
+</p>
+
+<p align="center">
+  <sub>iOS / iPadOS 26+ &nbsp; · &nbsp; Español e inglés &nbsp; · &nbsp; SwiftUI</sub>
+</p>
 
 <p align="center">
   <img src="docs/screenshots/en/remote.png" width="32%" alt="Remio: mando y trackpad">
@@ -14,30 +25,36 @@ Disponible en **español e inglés**, seleccionados automáticamente según el i
   <img src="docs/screenshots/en/tools.png" width="32%" alt="Remio: herramientas ADB">
 </p>
 
-**Requisitos:** iOS/iPadOS 26 y un Portal con [Immortal](https://github.com/starbrightlab/immortal), en la misma Wi-Fi. Las herramientas requieren ADB habilitado y autorizado.
+### Control y herramientas
 
-### Descargar
+Mueve el cursor, escribe con el teclado de iOS, abre aplicaciones y controla la reproducción. Gestiona APK, envía fotos y crea copias mediante ADB. El idioma se adapta automáticamente al dispositivo.
 
-[**Descargar IPA →**](https://github.com/AnubisReal/Remio/releases)
+Necesitas un Portal con [Immortal](https://github.com/starbrightlab/immortal) en la misma Wi-Fi. Las herramientas requieren ADB habilitado y autorizado.
 
-Disponible **Remio 0.1.4** para carga lateral. La validación en hardware con cada gestor sigue pendiente.
+### Instala Remio
 
-### Fuente
-
-Añade esta URL en **AltStore Classic, SideStore o LiveContainer**:
+Descarga el [último IPA](https://github.com/AnubisReal/Remio/releases/latest) o añade esta fuente en **AltStore Classic, SideStore o LiveContainer**:
 
 ```text
 https://raw.githubusercontent.com/AnubisReal/Remio/main/distribution/source.json
 ```
 
-La fuente muestra el icono y las versiones disponibles, y se actualiza al publicar un nuevo release estable. Los borradores no aparecen.
+La fuente incluye el icono y se actualiza con cada release estable. La validación en hardware con cada gestor sigue pendiente.
 
----
+<details>
+<summary><strong>Documentación</strong></summary>
 
 [Desarrollo](ios/README.md) · [Distribución](docs/DISTRIBUTION.md) · [Conexiones](docs/DUAL-CONNECTION.md) · [Herramientas](docs/TOOLKIT-PARITY.md)
 
-Creado por [AnubisReal](https://github.com/AnubisReal) · [Instagram](https://www.instagram.com/anubisreal/) · [X](https://x.com/Anubisreal23).
+</details>
 
-Gracias a [jurax-sys](https://github.com/jurax-sys) por [Portal Toolkit](https://github.com/jurax-sys/portal-toolkit), que nos ha servido de referencia para algunas de las herramientas de Remio. ¡Un saludo y gracias por compartir el proyecto con la comunidad!
+---
 
-Remio es un proyecto independiente, sin afiliación con Meta.
+<p align="center">
+  Creado por <a href="https://github.com/AnubisReal">AnubisReal</a><br>
+  <a href="https://www.instagram.com/anubisreal/">Instagram</a> &nbsp; · &nbsp; <a href="https://x.com/Anubisreal23">X</a>
+</p>
+
+Gracias a [jurax-sys](https://github.com/jurax-sys) por [Portal Toolkit](https://github.com/jurax-sys/portal-toolkit), referencia para algunas de nuestras herramientas. ¡Un saludo y gracias por compartirlo con la comunidad!
+
+<p align="center"><sub>Proyecto independiente, sin afiliación con Meta.</sub></p>
