@@ -27,7 +27,7 @@ struct RemoteView: View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 20) {
-                    if !remote.isConnected { connectionCard }
+                    if remote.shouldShowConnectionCard { connectionCard }
                     HStack(spacing: 12) {
                         Button { appsDetent = .medium; showApps = true } label: { controlLabel("Apps", "square.grid.2x2") }
                         Button { showKeyboard = true } label: { controlLabel(String(localized: "Teclado"), "keyboard") }

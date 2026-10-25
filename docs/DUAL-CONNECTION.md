@@ -27,3 +27,9 @@ Referencias:
 El destino ADB se guarda localmente como IP y puerto validados (sin claves en preferencias). La app supervisa ADB desde su raíz mientras está en primer plano, sin depender de las pestañas. Reintenta pérdidas de conexión con esperas crecientes de 3 a 30 segundos. Al volver del segundo plano usa la misma clave del llavero. Si la firma deja de ser reconocida, detiene la reconexión automática y solicita conectar manualmente: nunca envía claves públicas nuevas en un bucle automático. La versión previa sin destino guardado migra la IP del mando y puerto 5555 únicamente si ya existe una identidad ADB local.
 
 Referencia Android: MainScreen.kt ejecuta viewModel.connect al arrancar si hay una IP guardada. SavedPortalStore y preferencias conservan destinos; AdbKeyPairProvider conserva la identidad RSA. Remio añade también reintentos de pérdida y recuperación en primer plano.
+
+## Presentación durante pausa y reconexión (0.1.4)
+
+El estado del contenedor de conexión se distingue de `isConnected`. Una sesión guardada arranca como reconectando, con controles bloqueados y sin mostrar el contenedor. Al entrar en Recientes, Remio cancela acciones, marca el mando como no operativo y conserva la presentación de pausa sin fingir una pérdida de red. El contenedor aparece cuando no hay vinculación, la sesión caduca o se confirma un fallo al reconectar. Si ya se mostraba por un fallo real, permanece estable durante los reintentos hasta recuperarse.
+
+Se han probado cancelaciones de red y del sondeo de capacidades, arranque con/sin sesión, pausa repetida, fallo real y recuperación. La revisión del simulador confirmó la secuencia reconectando → conectado → pausa → reconectando → conectado, con el contenedor oculto y el trackpad bloqueado durante las fases sin conexión. No se cambian credenciales ni se mantienen comandos pendientes para reproducirlos al volver.

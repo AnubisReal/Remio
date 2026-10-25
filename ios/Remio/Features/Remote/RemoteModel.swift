@@ -3,6 +3,10 @@ import Observation
 
 @MainActor @Observable
 final class RemoteModel {
+    enum ConnectionState { case unpaired, reconnecting, connected, paused, offline }
+    private(set) var connectionState: ConnectionState = .unpaired
+    /// Presentation state is independent of whether commands can currently be sent.
+    var shouldShowConnectionCard: Bool { needsPairing || connectionState == .offline }
     private(set) var deviceName = String(localized: "Tu Portal")
     private(set) var endpoint: PortalEndpoint?
     private(set) var isConnected = false
@@ -39,6 +43,7 @@ final class RemoteModel {
             endpoint = credential?.endpoint
             deviceName = credential?.name ?? String(localized: "Tu Portal")
             needsPairing = credential == nil
+            connectionState = credential == nil ? .unpaired : .reconnecting
         } catch { message = PortalError.keychain.localizedDescription }
     }
 
@@ -46,6 +51,8 @@ final class RemoteModel {
         if isPairing { return String(localized: "Vinculando…") }
         if isConnecting { return String(localized: "Conectando…") }
         if isConnected { return String(localized: "Conectado") }
+        if connectionState == .paused { return String(localized: "En pausa") }
+        if connectionState == .reconnecting { return String(localized: "Reconectando…") }
         return needsPairing ? String(localized: "Sin vincular") : String(localized: "Sin conexión")
     }
 
@@ -69,6 +76,7 @@ final class RemoteModel {
         isActive = false
         dropPending()
         isConnected = false
+        if connectionState == .connected || connectionState == .reconnecting { connectionState = .paused }
         media = nil
     }
 
@@ -84,8 +92,9 @@ final class RemoteModel {
     }
 
     func refresh() async {
-        guard let api, !needsPairing, !isConnecting, !isPairing else { return }
+        guard !Task.isCancelled, let api, !needsPairing, !isConnecting, !isPairing else { return }
         let generation = generation
+        if !isConnected, connectionState != .offline { connectionState = .reconnecting }
         isConnecting = !isConnected
         defer { if self.generation == generation { isConnecting = false } }
         do {
@@ -99,6 +108,7 @@ final class RemoteModel {
                 guard !Task.isCancelled, self.generation == generation else { return }
                 self.apps = apps.sorted { $0.label.localizedStandardCompare($1.label) == .orderedAscending }
                 isConnected = true
+                connectionState = .connected
                 inputUnavailable = false
                 feedback = String(localized: "Desliza para mover · toca para seleccionar")
             }
@@ -114,8 +124,9 @@ final class RemoteModel {
 
         } catch is CancellationError { }
         catch {
-            guard self.generation == generation else { return }
+            guard !Task.isCancelled, self.generation == generation else { return }
             handle(error, passive: true)
+            if !isConnected, !needsPairing { connectionState = .offline }
         }
     }
 
@@ -138,6 +149,7 @@ final class RemoteModel {
             self.endpoint = endpoint
             deviceName = saved.name
             needsPairing = false
+            connectionState = .reconnecting
             isConnected = false
             inputUnavailable = false
             showConnection = false
@@ -158,6 +170,7 @@ final class RemoteModel {
             endpoint = nil
             isConnected = false
             needsPairing = true
+            connectionState = .unpaired
             media = nil
             apps = []
             deviceName = String(localized: "Tu Portal")
@@ -268,7 +281,7 @@ final class RemoteModel {
                 if case .text = command { feedback = String(localized: "Texto enviado al campo seleccionado") }
             } catch is CancellationError { return }
             catch {
-                guard self.generation == generation else { return }
+                guard !Task.isCancelled, self.generation == generation else { return }
                 pending.removeAll() // No replay after failures, reconnect or background.
                 handle(error, passive: false)
                 keyboardContext = UUID()
@@ -283,7 +296,7 @@ final class RemoteModel {
             if self.generation == generation, !Task.isCancelled { keyboardDetectionAvailable = true }
         } catch is CancellationError { }
         catch {
-            guard self.generation == generation else { return }
+            guard !Task.isCancelled, self.generation == generation else { return }
             switch error as? PortalError {
             case .server(404), .server(405), .incompatible: keyboardDetectionAvailable = false
             case .unauthorized, .inaccessible: handle(error, passive: true)
@@ -314,7 +327,7 @@ final class RemoteModel {
             keyboardDetected = UUID()
         } catch is CancellationError { }
         catch {
-            guard self.generation == generation else { return }
+            guard !Task.isCancelled, self.generation == generation else { return }
             switch error as? PortalError {
             case .server(404), .server(405), .incompatible: keyboardDetectionAvailable = false
             case .unauthorized, .inaccessible: handle(error, passive: true)
@@ -329,12 +342,14 @@ final class RemoteModel {
             case .unauthorized:
                 dropPending()
                 needsPairing = true
+                connectionState = .unpaired
                 isConnected = false
                 media = nil
                 apps = []
             case .unavailableInput: inputUnavailable = true
             case .inaccessible:
                 dropPending()
+                connectionState = .offline
                 isConnected = false
                 media = nil
             default: break

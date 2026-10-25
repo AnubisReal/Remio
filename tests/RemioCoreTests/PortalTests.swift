@@ -18,6 +18,13 @@ private actor StubPortal: PortalTransport {
     var inputFocus: Bool?
     var legacyFocus: Bool?
     var iconReply: Data?
+    var delay: Duration = .zero
+    var unreachable = false
+    var capabilityCancellationAsNetworkError = false
+    func delayCapabilityUntilCanceled() { capabilityCancellationAsNetworkError = true }
+    func configureConnection(delay: Duration = .zero, unreachable: Bool = false) {
+        self.delay = delay; self.unreachable = unreachable
+    }
 
     func configureIcon(_ data: Data) { iconReply = data }
 
@@ -29,6 +36,8 @@ private actor StubPortal: PortalTransport {
 
     func send(_ request: URLRequest) async throws -> (Data, Int) {
         try Task.checkCancellation()
+        if delay != .zero { try await Task.sleep(for: delay) }
+        if unreachable { throw PortalError.inaccessible }
         let path = request.url!.path
         requests.append(CapturedRequest(method: request.httpMethod ?? "", path: path,
             authorization: request.value(forHTTPHeaderField: "Authorization"), body: request.httpBody))
@@ -37,6 +46,10 @@ private actor StubPortal: PortalTransport {
             return (Data(#"{"ok":false,"error":"no_gestures"}"#.utf8), 503)
         }
         if path == "/remote/input-state" {
+            if capabilityCancellationAsNetworkError {
+                do { try await Task.sleep(for: .seconds(10)) }
+                catch { throw PortalError.inaccessible }
+            }
             guard let inputFocus else {
                 return (Data(#"{"ok":false,"error":"not_found"}"#.utf8), 404)
             }
@@ -605,4 +618,116 @@ func acceptsPrivateAddresses(_ address: String) throws {
     let old = try JSONDecoder().decode(ToolkitHistory.self, from: JSONSerialization.data(withJSONObject: legacy))
     #expect(old.activity == nil)
     #expect(old.displayTitle == "Previous label")
+}
+
+
+@Test @MainActor func savedPairingDoesNotFlashConnectionCardAtStartup() async throws {
+    let stub = StubPortal()
+    let model = RemoteModel(transport: stub, storage: MemoryStorage(try credential()))
+    #expect(model.connectionState == .reconnecting)
+    #expect(!model.shouldShowConnectionCard)
+    #expect(!model.isConnected && !model.canUseTouchpad)
+    await model.refresh()
+    #expect(model.isConnected && model.connectionState == .connected)
+    #expect(!model.shouldShowConnectionCard)
+    #expect(await stub.requests.allSatisfy { $0.method == "GET" })
+}
+
+@Test @MainActor func unpairedAndForgottenPortalStillShowConnectionCard() async throws {
+    let fresh = RemoteModel(transport: StubPortal(), storage: MemoryStorage())
+    #expect(fresh.shouldShowConnectionCard && fresh.needsPairing)
+    let paired = RemoteModel(transport: StubPortal(), storage: MemoryStorage(try credential()))
+    await paired.refresh()
+    paired.forget()
+    #expect(paired.shouldShowConnectionCard && paired.needsPairing)
+    #expect(paired.connectionState == .unpaired && !paired.isConnected)
+}
+
+@Test @MainActor func appSwitcherPausesCommandsWithoutShowingDisconnectedCard() async throws {
+    let stub = StubPortal()
+    let model = RemoteModel(transport: stub, storage: MemoryStorage(try credential()))
+    let monitor = Task { await model.monitor() }
+    try await waitUntil { model.isConnected }
+    monitor.cancel(); model.suspend()
+    #expect(model.connectionState == .paused)
+    #expect(!model.shouldShowConnectionCard && !model.canUseTouchpad)
+    model.enqueue(.tap)
+    try await Task.sleep(for: .milliseconds(70))
+    #expect(await stub.requests.allSatisfy { $0.method == "GET" })
+    model.suspend()
+    #expect(!model.shouldShowConnectionCard && model.connectionState == .paused)
+}
+
+@Test @MainActor func realConnectionFailureIsVisibleAndRetryKeepsCardUntilSuccess() async throws {
+    let stub = StubPortal()
+    await stub.configureConnection(unreachable: true)
+    let model = RemoteModel(transport: stub, storage: MemoryStorage(try credential()))
+    #expect(!model.shouldShowConnectionCard)
+    await model.refresh()
+    #expect(model.shouldShowConnectionCard && model.connectionState == .offline)
+    model.suspend()
+    #expect(model.shouldShowConnectionCard)
+    await stub.configureConnection(delay: .milliseconds(60))
+    let refresh = Task { await model.refresh() }
+    try await waitUntil { model.isConnecting }
+    #expect(model.shouldShowConnectionCard && !model.canUseTouchpad)
+    await refresh.value
+    #expect(model.isConnected && !model.shouldShowConnectionCard)
+}
+
+@Test @MainActor func cancellationWhileEnteringRecentsNeverConfirmsDisconnection() async throws {
+    let stub = StubPortal()
+    await stub.configureConnection(delay: .milliseconds(100))
+    let model = RemoteModel(transport: stub, storage: MemoryStorage(try credential()))
+    let refresh = Task { await model.refresh() }
+    try await waitUntil { model.isConnecting }
+    refresh.cancel(); model.suspend()
+    await refresh.value
+    #expect(model.connectionState == .paused && !model.shouldShowConnectionCard)
+    #expect(!model.isConnected && !model.isConnecting)
+}
+
+@Test @MainActor func foregroundReconnectDoesNotReplayCommands() async throws {
+    let stub = StubPortal()
+    let model = RemoteModel(transport: stub, storage: MemoryStorage(try credential()))
+    let first = Task { await model.monitor() }
+    try await waitUntil { model.isConnected }
+    model.move(dx: 10, dy: 5)
+    first.cancel(); model.suspend()
+    await stub.configureConnection(delay: .milliseconds(40))
+    let resumed = Task { await model.monitor() }
+    defer { resumed.cancel(); model.suspend() }
+    try await waitUntil { model.isConnecting }
+    #expect(!model.shouldShowConnectionCard && !model.canUseTouchpad)
+    model.enqueue(.tap)
+    try await waitUntil { model.isConnected }
+    #expect(!model.shouldShowConnectionCard)
+    #expect(await stub.requests.allSatisfy { $0.method == "GET" })
+}
+
+@Test @MainActor func expiredPairingAndServerFailureRemainVisible() async throws {
+    let unauthorized = StubPortal()
+    await unauthorized.configure(status: 401, reply: #"{"ok":false,"error":"unauthorized"}"#)
+    let model = RemoteModel(transport: unauthorized, storage: MemoryStorage(try credential()))
+    await model.refresh()
+    #expect(model.shouldShowConnectionCard && model.needsPairing)
+    let failed = StubPortal()
+    await failed.configure(status: 503, reply: #"{"ok":false,"error":"unavailable"}"#)
+    let offline = RemoteModel(transport: failed, storage: MemoryStorage(try credential()))
+    await offline.refresh()
+    #expect(offline.shouldShowConnectionCard && !offline.isConnected)
+}
+
+
+@Test @MainActor func canceledCapabilityProbeIsNotMistakenForNetworkLoss() async throws {
+    let stub = StubPortal()
+    await stub.delayCapabilityUntilCanceled()
+    let model = RemoteModel(transport: stub, storage: MemoryStorage(try credential()))
+    let refresh = Task { await model.refresh() }
+    try await waitUntil { await stub.requests.contains { $0.path == "/remote/input-state" } }
+    refresh.cancel()
+    await refresh.value
+    model.suspend()
+    #expect(model.connectionState == .paused)
+    #expect(!model.shouldShowConnectionCard && !model.isConnected)
 }

@@ -42,6 +42,15 @@ struct RemioApp: App {
                 if ProcessInfo.processInfo.arguments.contains("--keychain-self-test") { keychainSelfTest() }
                 if ProcessInfo.processInfo.environment["REMIO_CONNECTION_PREVIEW"] == "1" { remote.showConnection = true }
             }
+            .onChange(of: remote.connectionState, initial: true) { _, state in
+                if ProcessInfo.processInfo.environment["REMIO_CONNECTION_PRESENTATION_TEST"] == "1",
+                   let folder = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first {
+                    let url = folder.appendingPathComponent("connection-presentation-test.json")
+                    var entries = (try? Data(contentsOf: url)).flatMap { try? JSONSerialization.jsonObject(with: $0) as? [[String: Any]] } ?? []
+                    entries.append(["phase": String(describing: state), "cardVisible": remote.shouldShowConnectionCard, "connected": remote.isConnected, "touchpadEnabled": remote.canUseTouchpad])
+                    if let data = try? JSONSerialization.data(withJSONObject: Array(entries.suffix(40)), options: [.prettyPrinted, .sortedKeys]) { try? data.write(to: url) }
+                }
+            }
             .onChange(of: administration.status) { _, status in
                 if ProcessInfo.processInfo.environment["REMIO_ADB_DIAGNOSTIC"] == "1",
                    let folder = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first {
